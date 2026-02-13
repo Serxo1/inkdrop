@@ -15,7 +15,7 @@ export function CtaSection() {
         {t.cta.subtitle}
       </p>
       <a
-        href="/tool"
+        href="/upload"
         className="mt-8 flex h-[52px] items-center gap-2 rounded-[10px] bg-primary px-8 text-base font-semibold text-primary-foreground transition-opacity hover:opacity-90"
       >
         <Upload className="h-5 w-5" />

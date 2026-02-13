@@ -23,7 +23,7 @@ export function Hero() {
 
       <div className="mt-8 flex items-center gap-3">
         <a
-          href="/tool"
+          href="/upload"
           className="flex h-12 items-center gap-2 rounded-[10px] bg-primary px-7 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
         >
           <Upload className="h-[18px] w-[18px]" />
