@@ -18,46 +18,37 @@ import { PropertiesPanel } from "./properties-panel";
 const UPLOAD_KEY = "svgcolor-upload";
 const PROJECT_ID_KEY = "svgcolor-project-id";
 
-function loadInitialSvg(): { svg: string; layers: SvgLayer[] } {
-  if (typeof window === "undefined") return { svg: "", layers: [] };
-  const stored = sessionStorage.getItem(UPLOAD_KEY);
-  if (!stored) return { svg: "", layers: [] };
-  return parseSvg(stored);
-}
-
-function loadFileName(): string {
-  if (typeof window === "undefined") return "my-icon.svg";
-  return sessionStorage.getItem("svgcolor-filename") || "my-icon.svg";
-}
-
-function loadProjectId(): string | null {
-  if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(PROJECT_ID_KEY);
-}
-
 export function ToolLayout() {
   const { t } = useI18n();
-  const [{ svg: initialSvg, layers: initialLayers }] = useState(loadInitialSvg);
-  const [svgContent, setSvgContent] = useState(initialSvg);
-  const [layers, setLayers] = useState<SvgLayer[]>(initialLayers);
+  const [svgContent, setSvgContent] = useState("");
+  const [layers, setLayers] = useState<SvgLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<ToolType>("select");
   const [zoom, setZoom] = useState(100);
-  const [fileName] = useState(loadFileName);
-  const [projectId, setProjectId] = useState<string | null>(loadProjectId);
+  const [fileName, setFileName] = useState("my-icon.svg");
+  const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState(t.tool.untitledProject);
   const [selectedColor, setSelectedColor] = useState("#E11D48");
   const [saved, setSaved] = useState(false);
 
-  // Load project name from storage if editing existing project
+  // Load from sessionStorage after mount to avoid hydration mismatch
   useEffect(() => {
-    if (projectId) {
-      const project = getProject(projectId);
-      if (project) {
-        setProjectName(project.name);
-      }
+    const stored = sessionStorage.getItem(UPLOAD_KEY);
+    if (stored) {
+      const { svg, layers: parsed } = parseSvg(stored);
+      setSvgContent(svg);
+      setLayers(parsed);
     }
-  }, [projectId]);
+    const storedName = sessionStorage.getItem("svgcolor-filename");
+    if (storedName) setFileName(storedName);
+
+    const storedProjectId = sessionStorage.getItem(PROJECT_ID_KEY);
+    if (storedProjectId) {
+      setProjectId(storedProjectId);
+      const project = getProject(storedProjectId);
+      if (project) setProjectName(project.name);
+    }
+  }, []);
 
   const handleSelectLayer = useCallback((id: string | null) => {
     setSelectedLayerId(id);
