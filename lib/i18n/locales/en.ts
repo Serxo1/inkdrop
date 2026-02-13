@@ -1,0 +1,101 @@
+interface Step {
+  title: string;
+  description: string;
+}
+
+interface Feature {
+  title: string;
+  description: string;
+}
+
+export interface Translations {
+  header: { howItWorks: string; github: string; openTool: string };
+  hero: {
+    badge: string;
+    title: string;
+    subtitle: string;
+    upload: string;
+    viewGithub: string;
+  };
+  howItWorks: { title: string; subtitle: string; steps: [Step, Step, Step] };
+  features: {
+    title: string;
+    items: [Feature, Feature, Feature, Feature];
+  };
+  cta: { title: string; subtitle: string; button: string };
+  footer: { madeBy: string; polyaxis: string; license: string };
+}
+
+export const en: Translations = {
+  header: {
+    howItWorks: "How it works",
+    github: "GitHub",
+    openTool: "Open tool",
+  },
+  hero: {
+    badge: "100% free, no catch",
+    title: "Your SVGs are boring.\nLet's fix that.",
+    subtitle:
+      "Drop an SVG, click on any path, pick a color. That's it.\nNo sign-up, no backend, no tracking. Just vibes and vectors.",
+    upload: "Upload your SVG",
+    viewGithub: "View on GitHub",
+  },
+  howItWorks: {
+    title: "Dead simple. Like, really.",
+    subtitle:
+      "Three steps. No tutorial needed. Your grandma could do this.",
+    steps: [
+      {
+        title: "Drop your SVG",
+        description:
+          "Drag it in or click to browse.\nWe accept any .svg file up to 5MB.",
+      },
+      {
+        title: "Go wild with colors",
+        description:
+          "Click on any path and pick a color.\nFill, stroke, opacity — it's all there.",
+      },
+      {
+        title: "Download & flex",
+        description:
+          "Export your masterpiece as SVG.\nSave to browser for later, too.",
+      },
+    ],
+  },
+  features: {
+    title: "Why you'll like this",
+    items: [
+      {
+        title: "No backend. Zero.",
+        description:
+          "Everything runs in your browser. Your files never leave your machine. Promise.",
+      },
+      {
+        title: "Save with SQLite",
+        description:
+          "Projects are saved right in your browser. Come back tomorrow, your work is still there.",
+      },
+      {
+        title: "Open source, obviously",
+        description:
+          "MIT license. Fork it, break it, improve it. PRs welcome, bugs expected.",
+      },
+      {
+        title: "Fast as heck",
+        description:
+          "No server roundtrips. Instant color changes. Your SVG, your CPU, your speed.",
+      },
+    ],
+  },
+  cta: {
+    title: "Stop staring at black SVGs.",
+    subtitle:
+      "Seriously, go color something. It's free and takes 10 seconds.",
+    button: "Start coloring — it's free",
+  },
+  footer: {
+    madeBy: "Made with caffeine by",
+    polyaxis: "Polyaxis",
+    license: "MIT License — do whatever you want",
+  },
+};
