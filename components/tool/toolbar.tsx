@@ -37,6 +37,7 @@ interface ToolbarProps {
   onToolChange: (tool: ToolType) => void;
   selectedColor: string;
   onColorChange: (color: string) => void;
+  recentColors: string[];
 }
 
 interface ToolDef {
@@ -64,6 +65,7 @@ export function Toolbar({
   onToolChange,
   selectedColor,
   onColorChange,
+  recentColors,
 }: ToolbarProps) {
   const { t } = useI18n();
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -86,7 +88,6 @@ export function Toolbar({
         </button>
       ))}
 
-      {/* Separator */}
       <div className="mx-auto my-1 h-px w-6 bg-border" />
 
       {secondaryTools.map((tool) => (
@@ -105,7 +106,6 @@ export function Toolbar({
         </button>
       ))}
 
-      {/* Separator */}
       <div className="mx-auto my-1 h-px w-6 bg-border" />
 
       {/* Active color swatch */}
@@ -127,6 +127,21 @@ export function Toolbar({
           tabIndex={-1}
         />
       </button>
+
+      {/* Recent colors */}
+      {recentColors.length > 0 && (
+        <div className="mt-1 grid grid-cols-2 gap-0.5">
+          {recentColors.map((color) => (
+            <button
+              key={color}
+              onClick={() => onColorChange(color)}
+              className="h-4 w-4 rounded-sm border border-border transition-transform hover:scale-125"
+              style={{ backgroundColor: color }}
+              title={color}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

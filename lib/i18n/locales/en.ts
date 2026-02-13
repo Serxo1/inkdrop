@@ -44,12 +44,19 @@ export interface Translations {
     untitledProject: string;
     save: string;
     export: string;
+    undo: string;
+    redo: string;
+    reset: string;
+    randomize: string;
     layers: string;
     pathCount: string;
     fill: string;
     stroke: string;
     opacity: string;
     width: string;
+    transform: string;
+    rotation: string;
+    scale: string;
     emptyCanvas: string;
     tools: {
       select: string;
@@ -181,12 +188,19 @@ export const en: Translations = {
     untitledProject: "Untitled Project",
     save: "Save",
     export: "Export",
+    undo: "Undo",
+    redo: "Redo",
+    reset: "Reset",
+    randomize: "Randomize",
     layers: "Layers",
     pathCount: "paths",
     fill: "Fill",
     stroke: "Stroke",
     opacity: "Opacity",
     width: "Width",
+    transform: "Transform",
+    rotation: "Rotation",
+    scale: "Scale",
     emptyCanvas: "SVG canvas",
     tools: {
       select: "Select",

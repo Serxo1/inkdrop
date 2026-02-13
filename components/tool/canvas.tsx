@@ -13,6 +13,8 @@ interface CanvasProps {
   onSelectLayer: (id: string | null) => void;
   onBucketFill: (elementId: string) => void;
   onEyedrop: (elementId: string) => void;
+  onDragMove: (elementId: string, dx: number, dy: number) => void;
+  onDragEnd: () => void;
 }
 
 const SHAPE_TAGS = new Set([
@@ -56,6 +58,8 @@ export function Canvas({
   onSelectLayer,
   onBucketFill,
   onEyedrop,
+  onDragMove,
+  onDragEnd,
 }: CanvasProps) {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,6 +70,11 @@ export function Canvas({
   const panStart = useRef({ x: 0, y: 0 });
   const offsetStart = useRef({ x: 0, y: 0 });
 
+  // Drag-to-move state
+  const isDragging = useRef(false);
+  const dragTargetId = useRef<string | null>(null);
+  const dragLastPos = useRef({ x: 0, y: 0 });
+
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (activeTool === "pan") {
@@ -73,9 +82,23 @@ export function Canvas({
         panStart.current = { x: e.clientX, y: e.clientY };
         offsetStart.current = { ...offset };
         e.preventDefault();
+        return;
+      }
+
+      // Select tool: start drag-to-move on shapes
+      if (activeTool === "select") {
+        const target = e.target as Element;
+        const shape = findShapeElement(target, containerRef.current);
+        if (shape) {
+          isDragging.current = true;
+          dragTargetId.current = shape.id;
+          dragLastPos.current = { x: e.clientX, y: e.clientY };
+          onSelectLayer(shape.id);
+          e.preventDefault();
+        }
       }
     },
-    [activeTool, offset]
+    [activeTool, offset, onSelectLayer]
   );
 
   const handleMouseMove = useCallback(
@@ -87,42 +110,51 @@ export function Canvas({
           x: offsetStart.current.x + dx,
           y: offsetStart.current.y + dy,
         });
+        return;
+      }
+
+      if (isDragging.current && dragTargetId.current) {
+        const scale = zoom / 100;
+        const dx = (e.clientX - dragLastPos.current.x) / scale;
+        const dy = (e.clientY - dragLastPos.current.y) / scale;
+        dragLastPos.current = { x: e.clientX, y: e.clientY };
+        onDragMove(dragTargetId.current, dx, dy);
       }
     },
-    []
+    [zoom, onDragMove]
   );
 
   const handleMouseUp = useCallback(() => {
-    isPanning.current = false;
-  }, []);
+    if (isPanning.current) {
+      isPanning.current = false;
+    }
+    if (isDragging.current) {
+      isDragging.current = false;
+      dragTargetId.current = null;
+      onDragEnd();
+    }
+  }, [onDragEnd]);
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isPanning.current) return;
+      // Don't fire click after a drag
+      if (isDragging.current || isPanning.current) return;
 
       const target = e.target as Element;
       const shape = findShapeElement(target, containerRef.current);
 
       switch (activeTool) {
         case "select": {
-          if (shape) {
-            onSelectLayer(shape.id);
-          } else {
-            onSelectLayer(null);
-          }
+          if (!shape) onSelectLayer(null);
           break;
         }
         case "brush":
         case "bucket": {
-          if (shape) {
-            onBucketFill(shape.id);
-          }
+          if (shape) onBucketFill(shape.id);
           break;
         }
         case "eyedropper": {
-          if (shape) {
-            onEyedrop(shape.id);
-          }
+          if (shape) onEyedrop(shape.id);
           break;
         }
       }
@@ -135,9 +167,11 @@ export function Canvas({
     : "";
 
   const cursor =
-    activeTool === "pan" && isPanning.current
+    isPanning.current
       ? "grabbing"
-      : TOOL_CURSORS[activeTool] || "default";
+      : isDragging.current
+        ? "move"
+        : TOOL_CURSORS[activeTool] || "default";
 
   return (
     <div

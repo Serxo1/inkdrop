@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { SvgLayer } from "@/lib/svg-parser";
+import type { SvgLayer, SvgTransform } from "@/lib/svg-parser";
 
 interface PropertiesPanelProps {
   layers: SvgLayer[];
@@ -13,6 +13,7 @@ interface PropertiesPanelProps {
   onUpdateStroke: (id: string, color: string) => void;
   onUpdateStrokeWidth: (id: string, width: string) => void;
   onUpdateOpacity: (id: string, opacity: string) => void;
+  onUpdateTransform: (id: string, transform: SvgTransform) => void;
 }
 
 function toHex(color: string): string {
@@ -32,6 +33,7 @@ export function PropertiesPanel({
   onUpdateStroke,
   onUpdateStrokeWidth,
   onUpdateOpacity,
+  onUpdateTransform,
 }: PropertiesPanelProps) {
   const { t } = useI18n();
   const fillColorRef = useRef<HTMLInputElement>(null);
@@ -42,8 +44,21 @@ export function PropertiesPanel({
     ? Math.round(parseFloat(selectedLayer.opacity) * 100)
     : 100;
 
+  function handleTransformField(
+    field: keyof SvgTransform,
+    value: string
+  ) {
+    if (!selectedLayerId || !selectedLayer) return;
+    const num = parseFloat(value);
+    if (isNaN(num)) return;
+    onUpdateTransform(selectedLayerId, {
+      ...selectedLayer.transform,
+      [field]: num,
+    });
+  }
+
   return (
-    <div className="flex w-[280px] flex-col border-l border-border bg-background">
+    <div className="flex w-[280px] flex-col overflow-y-auto border-l border-border bg-background">
       {/* Layers Section */}
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between">
@@ -55,7 +70,7 @@ export function PropertiesPanel({
           </span>
         </div>
 
-        <div className="flex max-h-[240px] flex-col gap-0.5 overflow-y-auto">
+        <div className="flex max-h-[200px] flex-col gap-0.5 overflow-y-auto">
           {layers.map((layer) => (
             <button
               key={layer.id}
@@ -104,9 +119,7 @@ export function PropertiesPanel({
               type="color"
               value={toHex(selectedLayer?.fill || "#000000")}
               onChange={(e) => {
-                if (selectedLayerId) {
-                  onUpdateFill(selectedLayerId, e.target.value);
-                }
+                if (selectedLayerId) onUpdateFill(selectedLayerId, e.target.value);
               }}
               disabled={!selectedLayer}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -117,9 +130,7 @@ export function PropertiesPanel({
             type="text"
             value={selectedLayer?.fill || ""}
             onChange={(e) => {
-              if (selectedLayerId) {
-                onUpdateFill(selectedLayerId, e.target.value);
-              }
+              if (selectedLayerId) onUpdateFill(selectedLayerId, e.target.value);
             }}
             disabled={!selectedLayer}
             placeholder="#000000"
@@ -128,9 +139,7 @@ export function PropertiesPanel({
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {t.tool.opacity}
-          </span>
+          <span className="text-xs text-muted-foreground">{t.tool.opacity}</span>
           <div className="flex items-center gap-2">
             <input
               type="range"
@@ -179,9 +188,7 @@ export function PropertiesPanel({
               type="color"
               value={toHex(selectedLayer?.stroke || "#000000")}
               onChange={(e) => {
-                if (selectedLayerId) {
-                  onUpdateStroke(selectedLayerId, e.target.value);
-                }
+                if (selectedLayerId) onUpdateStroke(selectedLayerId, e.target.value);
               }}
               disabled={!selectedLayer}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -192,9 +199,7 @@ export function PropertiesPanel({
             type="text"
             value={selectedLayer?.stroke || ""}
             onChange={(e) => {
-              if (selectedLayerId) {
-                onUpdateStroke(selectedLayerId, e.target.value);
-              }
+              if (selectedLayerId) onUpdateStroke(selectedLayerId, e.target.value);
             }}
             disabled={!selectedLayer}
             placeholder="none"
@@ -203,20 +208,103 @@ export function PropertiesPanel({
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            {t.tool.width}
-          </span>
+          <span className="text-xs text-muted-foreground">{t.tool.width}</span>
           <input
             type="text"
             value={selectedLayer?.strokeWidth || "1"}
             onChange={(e) => {
-              if (selectedLayerId) {
-                onUpdateStrokeWidth(selectedLayerId, e.target.value);
-              }
+              if (selectedLayerId) onUpdateStrokeWidth(selectedLayerId, e.target.value);
             }}
             disabled={!selectedLayer}
             className="h-7 w-16 rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      {/* Transform Section */}
+      <div className="flex flex-col gap-3 p-4">
+        <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+          {t.tool.transform}
+        </span>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-muted-foreground">X</span>
+            <input
+              type="number"
+              step="1"
+              value={selectedLayer ? Math.round(selectedLayer.transform.x) : 0}
+              onChange={(e) => handleTransformField("x", e.target.value)}
+              disabled={!selectedLayer}
+              className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-muted-foreground">Y</span>
+            <input
+              type="number"
+              step="1"
+              value={selectedLayer ? Math.round(selectedLayer.transform.y) : 0}
+              onChange={(e) => handleTransformField("y", e.target.value)}
+              disabled={!selectedLayer}
+              className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-muted-foreground">
+              {t.tool.rotation}
+            </span>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                step="1"
+                value={
+                  selectedLayer
+                    ? Math.round(selectedLayer.transform.rotation)
+                    : 0
+                }
+                onChange={(e) => handleTransformField("rotation", e.target.value)}
+                disabled={!selectedLayer}
+                className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <span className="text-[10px] text-muted-foreground">deg</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[10px] text-muted-foreground">
+              {t.tool.scale}
+            </span>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                step="0.1"
+                min="0.1"
+                value={
+                  selectedLayer
+                    ? Math.round(selectedLayer.transform.scaleX * 100)
+                    : 100
+                }
+                onChange={(e) => {
+                  const pct = parseFloat(e.target.value);
+                  if (isNaN(pct) || !selectedLayerId || !selectedLayer) return;
+                  const s = pct / 100;
+                  onUpdateTransform(selectedLayerId, {
+                    ...selectedLayer.transform,
+                    scaleX: s,
+                    scaleY: s,
+                  });
+                }}
+                disabled={!selectedLayer}
+                className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <span className="text-[10px] text-muted-foreground">%</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
