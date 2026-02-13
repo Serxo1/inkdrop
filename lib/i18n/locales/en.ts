@@ -61,6 +61,22 @@ export interface Translations {
       zoomOut: string;
     };
   };
+  gallery: {
+    title: string;
+    subtitle: string;
+    projectCount: string;
+    open: string;
+    download: string;
+    delete: string;
+    deleteConfirm: string;
+    emptyTitle: string;
+    emptySubtitle: string;
+    uploadSvg: string;
+    justNow: string;
+    minutesAgo: string;
+    hoursAgo: string;
+    daysAgo: string;
+  };
 }
 
 export const en: Translations = {
@@ -180,5 +196,21 @@ export const en: Translations = {
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
     },
+  },
+  gallery: {
+    title: "Gallery",
+    subtitle: "Your saved masterpieces",
+    projectCount: "projects",
+    open: "Open",
+    download: "Download",
+    delete: "Delete",
+    deleteConfirm: "Are you sure you want to delete this project?",
+    emptyTitle: "No projects yet",
+    emptySubtitle: "Upload an SVG to get started",
+    uploadSvg: "Upload SVG",
+    justNow: "just now",
+    minutesAgo: "min ago",
+    hoursAgo: "hours ago",
+    daysAgo: "days ago",
   },
 };
