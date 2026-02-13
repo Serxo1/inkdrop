@@ -72,4 +72,50 @@ export const pt: Translations = {
     polyaxis: "Polyaxis",
     license: "Licença MIT — faça o que quiser",
   },
+  upload: {
+    title: "Colora seus SVGs",
+    subtitle:
+      "Suba um arquivo SVG e pinte cada path com a cor que quiser. Grátis, open-source, sem backend.",
+    dropTitle: "Arraste e solte seu SVG aqui",
+    dropOr: "ou",
+    browseFiles: "Procurar arquivos",
+    hint: "Aceita arquivos .svg de até 5MB",
+    invalidFile: "Por favor, envie um arquivo .svg válido",
+    fileTooLarge: "Arquivo muito grande. Máximo 5MB.",
+    features: [
+      {
+        title: "Pinte paths",
+        description: "Clique em qualquer path e escolha uma cor",
+      },
+      {
+        title: "Salve localmente",
+        description: "Projetos salvos no browser com SQLite",
+      },
+      {
+        title: "Exporte SVG",
+        description: "Baixe seu SVG colorido a qualquer momento",
+      },
+    ],
+  },
+  tool: {
+    untitledProject: "Projeto sem título",
+    save: "Salvar",
+    export: "Exportar",
+    layers: "Camadas",
+    pathCount: "paths",
+    fill: "Preenchimento",
+    stroke: "Contorno",
+    opacity: "Opacidade",
+    width: "Largura",
+    emptyCanvas: "Canvas SVG",
+    tools: {
+      select: "Selecionar",
+      pan: "Mover",
+      brush: "Pincel",
+      bucket: "Balde",
+      eyedropper: "Conta-gotas",
+      zoomIn: "Mais zoom",
+      zoomOut: "Menos zoom",
+    },
+  },
 } as const;

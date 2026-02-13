@@ -8,6 +8,11 @@ interface Feature {
   description: string;
 }
 
+interface UploadFeature {
+  title: string;
+  description: string;
+}
+
 export interface Translations {
   header: { howItWorks: string; github: string; openTool: string };
   hero: {
@@ -24,6 +29,38 @@ export interface Translations {
   };
   cta: { title: string; subtitle: string; button: string };
   footer: { madeBy: string; polyaxis: string; license: string };
+  upload: {
+    title: string;
+    subtitle: string;
+    dropTitle: string;
+    dropOr: string;
+    browseFiles: string;
+    hint: string;
+    invalidFile: string;
+    fileTooLarge: string;
+    features: [UploadFeature, UploadFeature, UploadFeature];
+  };
+  tool: {
+    untitledProject: string;
+    save: string;
+    export: string;
+    layers: string;
+    pathCount: string;
+    fill: string;
+    stroke: string;
+    opacity: string;
+    width: string;
+    emptyCanvas: string;
+    tools: {
+      select: string;
+      pan: string;
+      brush: string;
+      bucket: string;
+      eyedropper: string;
+      zoomIn: string;
+      zoomOut: string;
+    };
+  };
 }
 
 export const en: Translations = {
@@ -97,5 +134,51 @@ export const en: Translations = {
     madeBy: "Made with caffeine by",
     polyaxis: "Polyaxis",
     license: "MIT License — do whatever you want",
+  },
+  upload: {
+    title: "Color your SVGs",
+    subtitle:
+      "Upload an SVG file and paint each path with the color you want. Free, open-source, no backend.",
+    dropTitle: "Drag & drop your SVG here",
+    dropOr: "or",
+    browseFiles: "Browse files",
+    hint: "Supports .svg files up to 5MB",
+    invalidFile: "Please upload a valid .svg file",
+    fileTooLarge: "File is too large. Max 5MB.",
+    features: [
+      {
+        title: "Paint paths",
+        description: "Click any path and pick a color",
+      },
+      {
+        title: "Save locally",
+        description: "Projects saved in your browser with SQLite",
+      },
+      {
+        title: "Export SVG",
+        description: "Download your colored SVG anytime",
+      },
+    ],
+  },
+  tool: {
+    untitledProject: "Untitled Project",
+    save: "Save",
+    export: "Export",
+    layers: "Layers",
+    pathCount: "paths",
+    fill: "Fill",
+    stroke: "Stroke",
+    opacity: "Opacity",
+    width: "Width",
+    emptyCanvas: "SVG canvas",
+    tools: {
+      select: "Select",
+      pan: "Pan",
+      brush: "Brush",
+      bucket: "Fill",
+      eyedropper: "Eyedropper",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+    },
   },
 };
