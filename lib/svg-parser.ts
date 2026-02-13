@@ -4,6 +4,7 @@ export interface SvgLayer {
   fill: string;
   stroke: string;
   strokeWidth: string;
+  opacity: string;
   name: string;
 }
 
@@ -43,6 +44,7 @@ export function parseSvg(svgString: string): {
     const fill = getComputedFill(el);
     const stroke = el.getAttribute("stroke") || "none";
     const strokeWidth = el.getAttribute("stroke-width") || "1";
+    const opacity = el.getAttribute("opacity") || "1";
 
     layers.push({
       id: el.id,
@@ -50,6 +52,7 @@ export function parseSvg(svgString: string): {
       fill,
       stroke,
       strokeWidth,
+      opacity,
       name: el.id,
     });
   });
@@ -77,6 +80,17 @@ function getComputedFill(el: Element): string {
 
   // SVG default fill is black
   return "#000000";
+}
+
+/**
+ * Get the fill color of a specific element by ID.
+ */
+export function getElementFill(svgString: string, elementId: string): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const el = doc.getElementById(elementId);
+  if (!el) return "#000000";
+  return getComputedFill(el);
 }
 
 /**

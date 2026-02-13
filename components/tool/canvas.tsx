@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import type { ToolType } from "./toolbar";
@@ -11,7 +11,42 @@ interface CanvasProps {
   activeTool: ToolType;
   zoom: number;
   onSelectLayer: (id: string | null) => void;
+  onBucketFill: (elementId: string) => void;
+  onEyedrop: (elementId: string) => void;
 }
+
+const SHAPE_TAGS = new Set([
+  "path",
+  "rect",
+  "circle",
+  "ellipse",
+  "polygon",
+  "line",
+]);
+
+function findShapeElement(
+  target: Element,
+  container: HTMLElement | null
+): Element | null {
+  let el: Element | null = target;
+  while (el && el !== container) {
+    if (SHAPE_TAGS.has(el.tagName.toLowerCase()) && el.id) {
+      return el;
+    }
+    el = el.parentElement;
+  }
+  return null;
+}
+
+const TOOL_CURSORS: Record<string, string> = {
+  select: "default",
+  pan: "grab",
+  brush: "crosshair",
+  bucket: "crosshair",
+  eyedropper: "crosshair",
+  zoomIn: "zoom-in",
+  zoomOut: "zoom-out",
+};
 
 export function Canvas({
   svgContent,
@@ -19,51 +54,107 @@ export function Canvas({
   activeTool,
   zoom,
   onSelectLayer,
+  onBucketFill,
+  onEyedrop,
 }: CanvasProps) {
   const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleCanvasClick = useCallback(
+  // Pan state
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0 });
+  const offsetStart = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      if (activeTool !== "select") return;
-
-      const target = e.target as Element;
-
-      // Check if the clicked element is a shape element
-      const shapeTags = ["path", "rect", "circle", "ellipse", "polygon", "line"];
-      if (shapeTags.includes(target.tagName.toLowerCase()) && target.id) {
-        onSelectLayer(target.id);
-        return;
+      if (activeTool === "pan") {
+        isPanning.current = true;
+        panStart.current = { x: e.clientX, y: e.clientY };
+        offsetStart.current = { ...offset };
+        e.preventDefault();
       }
-
-      // Check parent elements (for elements inside groups)
-      let parent = target.parentElement;
-      while (parent && parent !== containerRef.current) {
-        if (shapeTags.includes(parent.tagName.toLowerCase()) && parent.id) {
-          onSelectLayer(parent.id);
-          return;
-        }
-        parent = parent.parentElement;
-      }
-
-      // Clicked on empty space - deselect
-      onSelectLayer(null);
     },
-    [activeTool, onSelectLayer]
+    [activeTool, offset]
   );
 
-  // Build the SVG with selection highlighting via CSS
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isPanning.current) {
+        const dx = e.clientX - panStart.current.x;
+        const dy = e.clientY - panStart.current.y;
+        setOffset({
+          x: offsetStart.current.x + dx,
+          y: offsetStart.current.y + dy,
+        });
+      }
+    },
+    []
+  );
+
+  const handleMouseUp = useCallback(() => {
+    isPanning.current = false;
+  }, []);
+
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isPanning.current) return;
+
+      const target = e.target as Element;
+      const shape = findShapeElement(target, containerRef.current);
+
+      switch (activeTool) {
+        case "select": {
+          if (shape) {
+            onSelectLayer(shape.id);
+          } else {
+            onSelectLayer(null);
+          }
+          break;
+        }
+        case "brush":
+        case "bucket": {
+          if (shape) {
+            onBucketFill(shape.id);
+          }
+          break;
+        }
+        case "eyedropper": {
+          if (shape) {
+            onEyedrop(shape.id);
+          }
+          break;
+        }
+      }
+    },
+    [activeTool, onSelectLayer, onBucketFill, onEyedrop]
+  );
+
   const svgWithStyles = svgContent
     ? buildStyledSvg(svgContent, selectedLayerId)
     : "";
 
+  const cursor =
+    activeTool === "pan" && isPanning.current
+      ? "grabbing"
+      : TOOL_CURSORS[activeTool] || "default";
+
   return (
-    <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-muted/30">
+    <div
+      className="relative flex flex-1 items-center justify-center overflow-hidden bg-muted/30"
+      style={{ cursor }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
       {svgContent ? (
         <div
           ref={containerRef}
           className="flex items-center justify-center p-8"
-          style={{ transform: `scale(${zoom / 100})` }}
+          style={{
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom / 100})`,
+          }}
           onClick={handleCanvasClick}
           dangerouslySetInnerHTML={{ __html: svgWithStyles }}
         />
@@ -84,18 +175,13 @@ export function Canvas({
   );
 }
 
-/**
- * Inject a <style> block into the SVG to highlight the selected element
- * and make all shapes have a pointer cursor when using the select tool.
- */
 function buildStyledSvg(
   svgContent: string,
   selectedLayerId: string | null
 ): string {
-  // Add a style element for selection highlighting
   const selectionStyle = selectedLayerId
     ? `<style>
-        path, rect, circle, ellipse, polygon, line { cursor: pointer; }
+        path, rect, circle, ellipse, polygon, line { cursor: inherit; }
         #${CSS.escape(selectedLayerId)} {
           outline: 2px solid #E11D48;
           outline-offset: 1px;
@@ -103,9 +189,8 @@ function buildStyledSvg(
         }
       </style>`
     : `<style>
-        path, rect, circle, ellipse, polygon, line { cursor: pointer; }
+        path, rect, circle, ellipse, polygon, line { cursor: inherit; }
       </style>`;
 
-  // Insert the style right after the opening <svg> tag
   return svgContent.replace(/(<svg[^>]*>)/i, `$1${selectionStyle}`);
 }

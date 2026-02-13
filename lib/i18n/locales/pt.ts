@@ -3,6 +3,7 @@ import type { Translations } from "./en";
 export const pt: Translations = {
   header: {
     howItWorks: "Como funciona",
+    gallery: "Galeria",
     github: "GitHub",
     openTool: "Abrir tool",
   },
@@ -134,4 +135,4 @@ export const pt: Translations = {
     hoursAgo: "horas atrás",
     daysAgo: "dias atrás",
   },
-} as const;
+};

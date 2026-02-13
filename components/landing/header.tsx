@@ -1,7 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
-import { Github } from "lucide-react";
+import { FolderOpen, Github } from "lucide-react";
 import { LocaleToggle } from "./locale-toggle";
 
 export function Header() {
@@ -22,6 +22,13 @@ export function Header() {
           {t.header.howItWorks}
         </a>
         <a
+          href="/gallery"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <FolderOpen className="h-4 w-4" />
+          <span className="hidden sm:inline">{t.header.gallery}</span>
+        </a>
+        <a
           href="https://github.com"
           target="_blank"
           rel="noopener noreferrer"
@@ -32,7 +39,7 @@ export function Header() {
         </a>
         <LocaleToggle />
         <a
-          href="/tool"
+          href="/upload"
           className="rounded-lg bg-foreground px-4 py-2 text-[13px] font-medium text-background transition-opacity hover:opacity-80"
         >
           {t.header.openTool}

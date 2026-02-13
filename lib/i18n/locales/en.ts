@@ -14,7 +14,7 @@ interface UploadFeature {
 }
 
 export interface Translations {
-  header: { howItWorks: string; github: string; openTool: string };
+  header: { howItWorks: string; gallery: string; github: string; openTool: string };
   hero: {
     badge: string;
     title: string;
@@ -82,6 +82,7 @@ export interface Translations {
 export const en: Translations = {
   header: {
     howItWorks: "How it works",
+    gallery: "Gallery",
     github: "GitHub",
     openTool: "Open tool",
   },

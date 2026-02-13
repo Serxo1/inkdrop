@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { SvgLayer } from "@/lib/svg-parser";
@@ -14,6 +15,15 @@ interface PropertiesPanelProps {
   onUpdateOpacity: (id: string, opacity: string) => void;
 }
 
+function toHex(color: string): string {
+  if (!color || color === "none") return "#000000";
+  if (color.startsWith("#") && color.length === 7) return color;
+  if (color.startsWith("#") && color.length === 4) {
+    return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+  }
+  return color;
+}
+
 export function PropertiesPanel({
   layers,
   selectedLayerId,
@@ -24,8 +34,13 @@ export function PropertiesPanel({
   onUpdateOpacity,
 }: PropertiesPanelProps) {
   const { t } = useI18n();
+  const fillColorRef = useRef<HTMLInputElement>(null);
+  const strokeColorRef = useRef<HTMLInputElement>(null);
 
   const selectedLayer = layers.find((l) => l.id === selectedLayerId);
+  const opacityPercent = selectedLayer
+    ? Math.round(parseFloat(selectedLayer.opacity) * 100)
+    : 100;
 
   return (
     <div className="flex w-[280px] flex-col border-l border-border bg-background">
@@ -74,15 +89,30 @@ export function PropertiesPanel({
         </span>
 
         <div className="flex items-center gap-2">
-          <span
-            className="h-8 w-8 shrink-0 rounded-md border border-border"
+          <button
+            onClick={() => fillColorRef.current?.click()}
+            className="relative h-8 w-8 shrink-0 rounded-md border border-border"
             style={{
               backgroundColor:
                 selectedLayer && selectedLayer.fill !== "none"
                   ? selectedLayer.fill
                   : "transparent",
             }}
-          />
+          >
+            <input
+              ref={fillColorRef}
+              type="color"
+              value={toHex(selectedLayer?.fill || "#000000")}
+              onChange={(e) => {
+                if (selectedLayerId) {
+                  onUpdateFill(selectedLayerId, e.target.value);
+                }
+              }}
+              disabled={!selectedLayer}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              tabIndex={-1}
+            />
+          </button>
           <input
             type="text"
             value={selectedLayer?.fill || ""}
@@ -106,7 +136,7 @@ export function PropertiesPanel({
               type="range"
               min="0"
               max="100"
-              value={100}
+              value={opacityPercent}
               onChange={(e) => {
                 if (selectedLayerId) {
                   onUpdateOpacity(
@@ -118,7 +148,9 @@ export function PropertiesPanel({
               disabled={!selectedLayer}
               className="h-1 w-20 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
-            <span className="text-xs text-muted-foreground">100%</span>
+            <span className="w-8 text-right text-xs text-muted-foreground">
+              {opacityPercent}%
+            </span>
           </div>
         </div>
       </div>
@@ -132,15 +164,30 @@ export function PropertiesPanel({
         </span>
 
         <div className="flex items-center gap-2">
-          <span
-            className="h-8 w-8 shrink-0 rounded-md border border-border"
+          <button
+            onClick={() => strokeColorRef.current?.click()}
+            className="relative h-8 w-8 shrink-0 rounded-md border border-border"
             style={{
               backgroundColor:
                 selectedLayer && selectedLayer.stroke !== "none"
                   ? selectedLayer.stroke
                   : "transparent",
             }}
-          />
+          >
+            <input
+              ref={strokeColorRef}
+              type="color"
+              value={toHex(selectedLayer?.stroke || "#000000")}
+              onChange={(e) => {
+                if (selectedLayerId) {
+                  onUpdateStroke(selectedLayerId, e.target.value);
+                }
+              }}
+              disabled={!selectedLayer}
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              tabIndex={-1}
+            />
+          </button>
           <input
             type="text"
             value={selectedLayer?.stroke || ""}
