@@ -23,8 +23,8 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
   });
 
   function handleOpen() {
-    sessionStorage.setItem("svgcolor-upload", project.svgContent);
-    sessionStorage.setItem("svgcolor-project-id", project.id);
+    sessionStorage.setItem("inkdrop-upload", project.svgContent);
+    sessionStorage.setItem("inkdrop-project-id", project.id);
     router.push("/tool");
   }
 

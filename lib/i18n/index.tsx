@@ -22,7 +22,7 @@ interface I18nContextValue {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-const STORAGE_KEY = "svgcolor-locale";
+const STORAGE_KEY = "inkdrop-locale";
 
 let currentLocale: Locale = "en";
 const listeners = new Set<() => void>();

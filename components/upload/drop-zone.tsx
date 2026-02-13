@@ -32,7 +32,7 @@ export function DropZone() {
       const reader = new FileReader();
       reader.onload = () => {
         const svgContent = reader.result as string;
-        sessionStorage.setItem("svgcolor-upload", svgContent);
+        sessionStorage.setItem("inkdrop-upload", svgContent);
         router.push("/tool");
       };
       reader.readAsText(file);

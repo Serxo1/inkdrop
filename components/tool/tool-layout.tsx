@@ -26,8 +26,8 @@ import { Toolbar, type ToolType } from "./toolbar";
 import { Canvas } from "./canvas";
 import { PropertiesPanel } from "./properties-panel";
 
-const UPLOAD_KEY = "svgcolor-upload";
-const PROJECT_ID_KEY = "svgcolor-project-id";
+const UPLOAD_KEY = "inkdrop-upload";
+const PROJECT_ID_KEY = "inkdrop-project-id";
 const MAX_RECENT_COLORS = 8;
 
 interface HistoryEntry {
@@ -96,7 +96,7 @@ export function ToolLayout() {
       historyIndexRef.current = 0;
       forceUpdate((n) => n + 1);
     }
-    const storedName = sessionStorage.getItem("svgcolor-filename");
+    const storedName = sessionStorage.getItem("inkdrop-filename");
     if (storedName) setFileName(storedName);
 
     const storedProjectId = sessionStorage.getItem(PROJECT_ID_KEY);
@@ -355,9 +355,9 @@ export function ToolLayout() {
         <div className="flex items-center gap-1">
           <Link href="/" className="flex items-center gap-2 pr-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">S</span>
+              <span className="text-xs font-bold text-primary-foreground">I</span>
             </div>
-            <span className="text-sm font-bold text-foreground">SVG Color</span>
+            <span className="text-sm font-bold text-foreground">Inkdrop</span>
           </Link>
           <Link
             href="/gallery"

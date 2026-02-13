@@ -6,7 +6,7 @@ import { I18nProvider } from "@/lib/i18n";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "SVG Color — Paint your SVGs, for free",
+  title: "Inkdrop — Paint your SVGs, for free",
   description:
     "Drop an SVG, click on paths, pick colors. No sign-up, no backend, no nonsense. A free tool by Polyaxis.",
 };

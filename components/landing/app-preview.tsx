@@ -62,7 +62,7 @@ export function AppPreview() {
             <div className="h-2.5 w-2.5 rounded-full bg-border" />
           </div>
           <span className="text-xs font-semibold text-muted-foreground">
-            SVG Color
+            Inkdrop
           </span>
           <div className="w-[52px]" />
         </div>

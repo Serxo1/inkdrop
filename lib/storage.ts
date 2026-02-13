@@ -8,7 +8,7 @@ export interface SavedProject {
   createdAt: number;
 }
 
-const STORAGE_KEY = "svgcolor-projects";
+const STORAGE_KEY = "inkdrop-projects";
 
 function readProjects(): SavedProject[] {
   if (typeof window === "undefined") return [];

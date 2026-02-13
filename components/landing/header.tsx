@@ -11,7 +11,7 @@ export function Header() {
     <header className="flex h-16 w-full items-center justify-between px-8 md:px-20">
       <div className="flex items-center gap-2.5">
         <div className="h-7 w-7 rounded-lg bg-primary" />
-        <span className="text-lg font-bold tracking-tight">SVG Color</span>
+        <span className="text-lg font-bold tracking-tight">Inkdrop</span>
       </div>
 
       <nav className="flex items-center gap-6">

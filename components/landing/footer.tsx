@@ -12,7 +12,7 @@ export function Footer() {
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2.5">
             <div className="h-6 w-6 rounded-md bg-primary" />
-            <span className="text-sm font-semibold">SVG Color</span>
+            <span className="text-sm font-semibold">Inkdrop</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
