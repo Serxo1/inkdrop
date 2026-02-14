@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  ChevronDown,
   Download,
   FolderOpen,
   RotateCcw,
@@ -10,8 +11,10 @@ import {
   Shuffle,
   Undo2,
   Redo2,
+  Check,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import {
   parseSvg,
   updateSvgElement,
@@ -22,6 +25,14 @@ import {
   type SvgTransform,
 } from "@/lib/svg-parser";
 import { saveProject, updateProject, getProject } from "@/lib/storage";
+import { COLOR_PALETTES, type ColorPalette } from "@/lib/color-palettes";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Toolbar, type ToolType } from "./toolbar";
 import { Canvas } from "./canvas";
 import { PropertiesPanel } from "./properties-panel";
@@ -48,6 +59,7 @@ export function ToolLayout() {
   const [selectedColor, setSelectedColor] = useState("#E11D48");
   const [saved, setSaved] = useState(false);
   const [recentColors, setRecentColors] = useState<string[]>([]);
+  const [selectedPalette, setSelectedPalette] = useState<ColorPalette | null>(null);
 
   // History for undo/redo
   const historyRef = useRef<HistoryEntry[]>([]);
@@ -256,9 +268,12 @@ export function ToolLayout() {
 
   const handleRandomize = useCallback(() => {
     if (!svgContent) return;
-    const { svg, layers: newLayers } = randomizeColors(svgContent);
+    const { svg, layers: newLayers } = randomizeColors(
+      svgContent,
+      selectedPalette?.colors
+    );
     applyChange(svg, newLayers);
-  }, [svgContent]);
+  }, [svgContent, selectedPalette]);
 
   const handleSave = useCallback(() => {
     if (!svgContent) return;
@@ -409,14 +424,65 @@ export function ToolLayout() {
             <RotateCcw size={14} />
             <span className="hidden md:inline">{t.tool.reset}</span>
           </button>
-          <button
-            onClick={handleRandomize}
-            title={t.tool.randomize}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <Shuffle size={14} />
-            <span className="hidden md:inline">{t.tool.randomize}</span>
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={handleRandomize}
+              title={t.tool.randomize}
+              className="inline-flex h-8 items-center gap-1.5 rounded-l-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Shuffle size={14} />
+              <span className="hidden md:inline">
+                {selectedPalette
+                  ? t.tool.palettes[selectedPalette.id as keyof typeof t.tool.palettes]
+                  : t.tool.randomize}
+              </span>
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                className="inline-flex h-8 items-center rounded-r-md px-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <ChevronDown size={12} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={() => setSelectedPalette(null)}
+                  className="flex items-center gap-2"
+                >
+                  <div className="flex items-center gap-1">
+                    <Shuffle size={12} className="text-muted-foreground" />
+                  </div>
+                  <span className="flex-1">{t.tool.palettes.random}</span>
+                  {!selectedPalette && <Check size={14} className="text-foreground" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {COLOR_PALETTES.map((palette) => (
+                  <DropdownMenuItem
+                    key={palette.id}
+                    onClick={() => setSelectedPalette(palette)}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="flex items-center gap-0.5">
+                      {palette.colors.slice(0, 5).map((color, i) => (
+                        <span
+                          key={i}
+                          className="inline-block h-3 w-3 rounded-full border border-border"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <span className="flex-1">
+                      {t.tool.palettes[palette.id as keyof typeof t.tool.palettes]}
+                    </span>
+                    {selectedPalette?.id === palette.id && (
+                      <Check size={14} className="text-foreground" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <AnimatedThemeToggler className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-[15px]" />
 
           <div className="mx-1 h-5 w-px bg-border" />
 

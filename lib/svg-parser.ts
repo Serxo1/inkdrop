@@ -190,8 +190,9 @@ export function updateSvgTransform(
 
 /**
  * Apply random colors to all shape elements.
+ * If a palette is provided, colors are picked from it; otherwise uses HSL random generation.
  */
-export function randomizeColors(svgString: string): {
+export function randomizeColors(svgString: string, palette?: string[]): {
   svg: string;
   layers: SvgLayer[];
 } {
@@ -207,11 +208,13 @@ export function randomizeColors(svgString: string): {
   // Generate a harmonious palette based on a random hue
   const baseHue = Math.random() * 360;
 
+  // Shuffle palette if provided for variety
+  const shuffled = palette ? [...palette].sort(() => Math.random() - 0.5) : null;
+
   elements.forEach((el, i) => {
-    const hue = (baseHue + i * 37) % 360; // golden angle spread
-    const sat = 60 + Math.random() * 30;
-    const lit = 45 + Math.random() * 30;
-    const color = hslToHex(hue, sat, lit);
+    const color = shuffled
+      ? shuffled[i % shuffled.length]
+      : hslToHex((baseHue + i * 37) % 360, 60 + Math.random() * 30, 45 + Math.random() * 30);
 
     // Remove fill from inline style
     const style = el.getAttribute("style");

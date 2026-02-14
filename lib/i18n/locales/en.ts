@@ -48,6 +48,19 @@ export interface Translations {
     redo: string;
     reset: string;
     randomize: string;
+    palettes: {
+      random: string;
+      pastel: string;
+      sunset: string;
+      ocean: string;
+      forest: string;
+      neon: string;
+      earth: string;
+      candy: string;
+      monochrome: string;
+      retro: string;
+      aurora: string;
+    };
     layers: string;
     pathCount: string;
     fill: string;
@@ -192,6 +205,19 @@ export const en: Translations = {
     redo: "Redo",
     reset: "Reset",
     randomize: "Randomize",
+    palettes: {
+      random: "Random",
+      pastel: "Pastel",
+      sunset: "Sunset",
+      ocean: "Ocean",
+      forest: "Forest",
+      neon: "Neon",
+      earth: "Earth",
+      candy: "Candy",
+      monochrome: "Monochrome",
+      retro: "Retro",
+      aurora: "Aurora",
+    },
     layers: "Layers",
     pathCount: "paths",
     fill: "Fill",
