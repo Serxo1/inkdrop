@@ -108,11 +108,11 @@ export const en: Translations = {
     openTool: "Open tool",
   },
   hero: {
-    badge: "100% free, no catch",
-    title: "Your SVGs are boring.\nLet's fix that.",
+    badge: "Free forever, open source",
+    title: "Edit SVGs\nlike you mean it.",
     subtitle:
-      "Drop an SVG, click on any path, pick a color. That's it.\nNo sign-up, no backend, no tracking. Just vibes and vectors.",
-    upload: "Upload your SVG",
+      "Recolor paths, reshape curves, move layers around. All in your browser.\nNo account. No backend. No BS.",
+    upload: "Open the editor",
     viewGithub: "View on GitHub",
   },
   howItWorks: {
@@ -121,52 +121,52 @@ export const en: Translations = {
       "Three steps. No tutorial needed. Your grandma could do this.",
     steps: [
       {
-        title: "Drop your SVG",
+        title: "Drop any SVG",
         description:
-          "Drag it in or click to browse.\nWe accept any .svg file up to 5MB.",
+          "Drag it in. We handle icons, illustrations, logos —\nanything .svg up to 5MB.",
       },
       {
-        title: "Go wild with colors",
+        title: "Make it yours",
         description:
-          "Click on any path and pick a color.\nFill, stroke, opacity — it's all there.",
+          "Pick colors, tweak bezier curves, move shapes around.\nPen tool, eyedropper, keyboard shortcuts — it's all there.",
       },
       {
-        title: "Download & flex",
+        title: "Export & ship",
         description:
-          "Export your masterpiece as SVG.\nSave to browser for later, too.",
+          "Download your SVG or save it to your browser.\nCome back tomorrow, it's still there.",
       },
     ],
   },
   features: {
-    title: "Why you'll like this",
+    title: "Built different",
     items: [
       {
-        title: "No backend. Zero.",
+        title: "Runs locally",
         description:
-          "Everything runs in your browser. Your files never leave your machine. Promise.",
+          "Your files never leave your machine. No uploads, no servers, no tracking. Period.",
       },
       {
-        title: "Save with SQLite",
+        title: "Saves in your browser",
         description:
-          "Projects are saved right in your browser. Come back tomorrow, your work is still there.",
+          "Projects persist in local storage. Close the tab, reopen next week — everything's there.",
       },
       {
-        title: "Open source, obviously",
+        title: "Keyboard-first",
         description:
-          "MIT license. Fork it, break it, improve it. PRs welcome, bugs expected.",
+          "Space to pan, P for pen, Cmd+K for shortcuts. Feels like a real design tool.",
       },
       {
-        title: "Fast as heck",
+        title: "Instant feedback",
         description:
-          "No server roundtrips. Instant color changes. Your SVG, your CPU, your speed.",
+          "No loading spinners. Color changes, path edits, undo/redo — all instant.",
       },
     ],
   },
   cta: {
-    title: "Stop staring at black SVGs.",
+    title: "Your SVGs deserve better.",
     subtitle:
-      "Seriously, go color something. It's free and takes 10 seconds.",
-    button: "Start coloring — it's free",
+      "Stop opening Figma for a color change. It takes 10 seconds here.",
+    button: "Start editing — it's free",
   },
   footer: {
     madeBy: "Made with caffeine by",

@@ -40,6 +40,7 @@ import { Toolbar, type ToolType } from "./toolbar";
 import { Canvas } from "./canvas";
 import { PropertiesPanel } from "./properties-panel";
 import { ShortcutsDialog } from "./shortcuts-dialog";
+import { InkdropLogo } from "@/components/inkdrop-logo";
 
 const UPLOAD_KEY = "inkdrop-upload";
 const PROJECT_ID_KEY = "inkdrop-project-id";
@@ -476,9 +477,7 @@ export function ToolLayout() {
         {/* Left: Logo + Gallery + Undo/Redo */}
         <div className="flex items-center gap-1">
           <Link href="/" className="flex items-center gap-2 pr-3">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-              <span className="text-xs font-bold text-primary-foreground">I</span>
-            </div>
+            <InkdropLogo size={28} />
             <span className="text-sm font-bold text-foreground">Inkdrop</span>
           </Link>
           <Link

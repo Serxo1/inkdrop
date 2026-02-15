@@ -46,8 +46,6 @@ export default function GalleryPage() {
     invalidateCache();
   }, []);
 
-  const mounted = typeof window !== "undefined";
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -60,7 +58,7 @@ export default function GalleryPage() {
             </h1>
             <p className="mt-1 text-muted-foreground">{t.gallery.subtitle}</p>
           </div>
-          {mounted && projects.length > 0 && (
+          {projects.length > 0 && (
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs">
               {projects.length} {t.gallery.projectCount}
             </span>
@@ -69,7 +67,7 @@ export default function GalleryPage() {
       </div>
 
       <div className="px-8 pb-16 md:px-20">
-        {mounted && projects.length === 0 ? (
+        {projects.length === 0 ? (
           <EmptyState />
         ) : (
           <ProjectGrid projects={projects} onDelete={handleDelete} />

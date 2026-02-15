@@ -8,9 +8,26 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "Inkdrop — Paint your SVGs, for free",
+  metadataBase: new URL("https://inkdrop.polyaxis.com.br"),
+  title: "Inkdrop — Edit SVGs like you mean it",
   description:
-    "Drop an SVG, click on paths, pick colors. No sign-up, no backend, no nonsense. A free tool by Polyaxis.",
+    "Recolor paths, reshape curves, move layers around. All in your browser. No account. No backend. No BS. A free tool by Polyaxis.",
+  icons: {
+    icon: "/icon.svg",
+  },
+  openGraph: {
+    title: "Inkdrop — Edit SVGs like you mean it",
+    description:
+      "Recolor paths, reshape curves, move layers around. All in your browser. No account, no backend, no BS.",
+    siteName: "Inkdrop",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Inkdrop — Edit SVGs like you mean it",
+    description:
+      "Recolor paths, reshape curves, move layers around. All in your browser. Free and open source.",
+  },
 };
 
 export default function RootLayout({

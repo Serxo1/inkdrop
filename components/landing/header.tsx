@@ -4,6 +4,7 @@ import { useI18n } from "@/lib/i18n";
 import { FolderOpen, Github } from "lucide-react";
 import { LocaleToggle } from "./locale-toggle";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { InkdropLogo } from "@/components/inkdrop-logo";
 
 export function Header() {
   const { t } = useI18n();
@@ -11,7 +12,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between bg-background/80 px-8 backdrop-blur-lg md:px-20">
       <div className="flex items-center gap-2.5">
-        <div className="h-7 w-7 rounded-lg bg-primary" />
+        <InkdropLogo size={28} />
         <span className="text-lg font-bold tracking-tight">Inkdrop</span>
       </div>
 

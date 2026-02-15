@@ -1,13 +1,13 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
-import { Code, Database, ShieldOff, Zap } from "lucide-react";
+import { Keyboard, HardDrive, Monitor, Zap } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 
 const featureIcons: ComponentType<SVGProps<SVGSVGElement>>[] = [
-  ShieldOff,
-  Database,
-  Code,
+  Monitor,
+  HardDrive,
+  Keyboard,
   Zap,
 ];
 

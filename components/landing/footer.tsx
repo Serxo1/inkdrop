@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/lib/i18n";
+import { InkdropLogo } from "@/components/inkdrop-logo";
 
 export function Footer() {
   const { t } = useI18n();
@@ -11,7 +12,7 @@ export function Footer() {
         {/* Top row */}
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2.5">
-            <div className="h-6 w-6 rounded-md bg-primary" />
+            <InkdropLogo size={24} />
             <span className="text-sm font-semibold">Inkdrop</span>
           </div>
 
