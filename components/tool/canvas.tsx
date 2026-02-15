@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { sanitizeSvg } from "@/lib/svg-sanitizer";
 import type { ToolType } from "./toolbar";
 import { PathOverlay } from "./path-overlay";
 
@@ -98,6 +99,7 @@ export function Canvas({
   const isDragging = useRef(false);
   const dragTargetId = useRef<string | null>(null);
   const dragLastPos = useRef({ x: 0, y: 0 });
+  const dragCTMInverse = useRef<DOMMatrix | null>(null);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -129,6 +131,15 @@ export function Canvas({
           isDragging.current = true;
           dragTargetId.current = shape.id;
           dragLastPos.current = { x: e.clientX, y: e.clientY };
+
+          // Get the element's CTM inverse to properly convert screen deltas
+          // to element-local coordinate deltas (handles ancestor transforms like scale/rotate)
+          dragCTMInverse.current = null;
+          if (shape instanceof SVGGraphicsElement) {
+            const ctm = shape.getScreenCTM();
+            if (ctm) dragCTMInverse.current = ctm.inverse();
+          }
+
           onSelectLayer(shape.id);
           e.preventDefault();
         }
@@ -150,10 +161,23 @@ export function Canvas({
       }
 
       if (isDragging.current && dragTargetId.current) {
-        const scale = zoom / 100;
-        const dx = (e.clientX - dragLastPos.current.x) / scale;
-        const dy = (e.clientY - dragLastPos.current.y) / scale;
+        const screenDx = e.clientX - dragLastPos.current.x;
+        const screenDy = e.clientY - dragLastPos.current.y;
         dragLastPos.current = { x: e.clientX, y: e.clientY };
+
+        let dx: number, dy: number;
+        const m = dragCTMInverse.current;
+        if (m) {
+          // Use inverse CTM to convert screen delta to element-local delta
+          // This properly handles ancestor transforms (scale, rotate, etc.)
+          dx = m.a * screenDx + m.c * screenDy;
+          dy = m.b * screenDx + m.d * screenDy;
+        } else {
+          // Fallback: simple zoom-based conversion
+          const scale = zoom / 100;
+          dx = screenDx / scale;
+          dy = screenDy / scale;
+        }
         onDragMove(dragTargetId.current, dx, dy);
       }
     },
@@ -196,8 +220,14 @@ export function Canvas({
     [activeTool, onSelectLayer, onBucketFill, onEyedrop]
   );
 
-  const svgWithStyles = svgContent
-    ? buildStyledSvg(svgContent, selectedLayerId)
+  // Sanitize once when content changes, not on every render
+  const sanitizedSvg = useMemo(
+    () => (svgContent ? sanitizeSvg(svgContent) : ""),
+    [svgContent]
+  );
+
+  const svgWithStyles = sanitizedSvg
+    ? buildStyledSvg(sanitizedSvg, selectedLayerId)
     : "";
 
   const cursor =

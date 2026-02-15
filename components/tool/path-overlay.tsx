@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   parsePath,
   getAnchorPoints,
@@ -9,7 +9,7 @@ import {
   serializePath,
   type PathCommand,
 } from "@/lib/path-parser";
-import { parseTransform } from "@/lib/svg-parser";
+import { getAncestorTransformChain } from "@/lib/svg-parser";
 
 interface PathOverlayProps {
   svgContent: string;
@@ -25,7 +25,7 @@ const STROKE_PX = 1.5;
 const DASH_PX = 1;
 const ACCENT = "#3B82F6";
 
-export function PathOverlay({
+export const PathOverlay = memo(function PathOverlay({
   svgContent,
   selectedLayerId,
   zoom,
@@ -33,6 +33,7 @@ export function PathOverlay({
   onPathUpdateEnd,
 }: PathOverlayProps) {
   const overlayRef = useRef<SVGSVGElement>(null);
+  const groupRef = useRef<SVGGElement>(null);
   const dragRef = useRef<{
     type: "anchor" | "handleIn" | "handleOut";
     commandIndex: number;
@@ -59,37 +60,40 @@ export function PathOverlay({
     const anchors = getAnchorPoints(commands);
 
     const viewBox = svgEl.getAttribute("viewBox") || "0 0 100 100";
-    const transform = parseTransform(el);
 
-    return { commands, anchors, viewBox, transform };
+    // Collect full ancestor transform chain (from outermost <g> to element itself)
+    // This handles SVGs where paths are inside transformed groups (e.g. potrace output)
+    const transformChain = getAncestorTransformChain(el);
+
+    return { commands, anchors, viewBox, transformChain };
   }, [svgContent, selectedLayerId]);
 
-  // Measure the actual pixel-to-SVG-unit ratio after render
+  // Measure the actual pixel-to-SVG-unit ratio after render using the group
+  // that has full transform chain applied (so sizes are correct in local space)
   useEffect(() => {
-    const svg = overlayRef.current;
-    if (!svg) return;
-    const ctm = svg.getScreenCTM();
+    const g = groupRef.current;
+    if (!g) return;
+    const ctm = g.getScreenCTM();
     if (ctm) setPxRatio(1 / Math.abs(ctm.a));
   }, [pathData, zoom]);
 
-  // Convert screen coords to SVG viewBox coords (minus element transform)
+  // Convert screen coords directly to path-local coords using the group's CTM
+  // (which includes all ancestor transforms + element transform)
   const screenToSvg = useCallback(
     (clientX: number, clientY: number) => {
       const svg = overlayRef.current;
-      if (!svg || !pathData) return { x: 0, y: 0 };
+      const g = groupRef.current;
+      if (!svg || !g) return { x: 0, y: 0 };
 
-      const ctm = svg.getScreenCTM();
+      const ctm = g.getScreenCTM();
       if (!ctm) return { x: 0, y: 0 };
 
       const pt = svg.createSVGPoint();
       pt.x = clientX;
       pt.y = clientY;
-      const svgPt = pt.matrixTransform(ctm.inverse());
+      const localPt = pt.matrixTransform(ctm.inverse());
 
-      return {
-        x: svgPt.x - pathData.transform.x,
-        y: svgPt.y - pathData.transform.y,
-      };
+      return { x: localPt.x, y: localPt.y };
     },
     [pathData]
   );
@@ -155,7 +159,7 @@ export function PathOverlay({
 
   if (!pathData) return null;
 
-  const { anchors, transform } = pathData;
+  const { anchors, transformChain } = pathData;
 
   // Sizes in viewBox units so they appear constant on screen
   const aSize = ANCHOR_PX * pxRatio;
@@ -171,7 +175,7 @@ export function PathOverlay({
       className="pointer-events-none absolute inset-0 h-full w-full"
       style={{ overflow: "visible" }}
     >
-      <g transform={`translate(${transform.x}, ${transform.y})`}>
+      <g ref={groupRef} transform={transformChain.join(" ")}>
         {anchors.map((anchor, i) => {
           const { x, y } = anchor.position;
 
@@ -253,4 +257,4 @@ export function PathOverlay({
       </g>
     </svg>
   );
-}
+});

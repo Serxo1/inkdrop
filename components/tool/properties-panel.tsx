@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { SvgLayer, SvgTransform } from "@/lib/svg-parser";
@@ -25,7 +25,7 @@ function toHex(color: string): string {
   return color;
 }
 
-export function PropertiesPanel({
+export const PropertiesPanel = memo(function PropertiesPanel({
   layers,
   selectedLayerId,
   onSelectLayer,
@@ -309,4 +309,4 @@ export function PropertiesPanel({
       </div>
     </div>
   );
-}
+});

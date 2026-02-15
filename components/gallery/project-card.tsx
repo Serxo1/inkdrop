@@ -5,6 +5,7 @@ import { formatRelativeTime } from "@/lib/relative-time";
 import { exportProjectAsSvg, type SavedProject } from "@/lib/storage";
 import { Download, ExternalLink, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { sanitizeSvg } from "@/lib/svg-sanitizer";
 
 interface ProjectCardProps {
   project: SavedProject;
@@ -43,7 +44,7 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
       <div className="relative flex aspect-[4/3] items-center justify-center bg-muted/30 p-6">
         <div
           className="flex h-full w-full items-center justify-center [&>svg]:max-h-full [&>svg]:max-w-full"
-          dangerouslySetInnerHTML={{ __html: project.thumbnail }}
+          dangerouslySetInnerHTML={{ __html: sanitizeSvg(project.thumbnail) }}
         />
         <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
           <button

@@ -15,7 +15,15 @@ function readProjects(): SavedProject[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as SavedProject[];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item: unknown): item is SavedProject =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as Record<string, unknown>).id === "string" &&
+        typeof (item as Record<string, unknown>).svgContent === "string"
+    );
   } catch {
     return [];
   }

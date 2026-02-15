@@ -30,15 +30,6 @@ export type ToolType =
   | "zoomIn"
   | "zoomOut";
 
-type ToolLabelKey =
-  | "select"
-  | "pan"
-  | "pen"
-  | "bucket"
-  | "eyedropper"
-  | "zoomIn"
-  | "zoomOut";
-
 interface ToolbarProps {
   activeTool: ToolType;
   onToolChange: (tool: ToolType) => void;
@@ -51,7 +42,7 @@ interface ToolbarProps {
 interface ToolDef {
   id: ToolType;
   icon: LucideIcon;
-  labelKey: ToolLabelKey;
+  labelKey: ToolType;
   shortcut: string;
 }
 

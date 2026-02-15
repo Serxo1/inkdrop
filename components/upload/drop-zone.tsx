@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { sanitizeSvg } from "@/lib/svg-sanitizer";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -31,9 +32,16 @@ export function DropZone() {
 
       const reader = new FileReader();
       reader.onload = () => {
-        const svgContent = reader.result as string;
+        const svgContent = sanitizeSvg(reader.result as string);
+        if (!svgContent) {
+          setError(t.upload.invalidFile);
+          return;
+        }
         sessionStorage.setItem("inkdrop-upload", svgContent);
         router.push("/tool");
+      };
+      reader.onerror = () => {
+        setError(t.upload.invalidFile);
       };
       reader.readAsText(file);
     },

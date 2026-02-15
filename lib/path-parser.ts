@@ -350,10 +350,12 @@ export function updateAnchorPosition(
 
   const upper = cmd.type.toUpperCase();
 
+  // Compute absolute commands once for all branches
+  const abs = toAbsoluteCommands(commands);
+  const absCmd = abs[commandIndex];
+
   // For H/V, convert to L if dragged off-axis
   if (upper === "H") {
-    const abs = toAbsoluteCommands(commands);
-    const absCmd = abs[commandIndex];
     const prevY = findPrevY(abs, commandIndex);
     if (Math.abs(newPosition.y - prevY) > 0.5) {
       // Convert to L
@@ -368,8 +370,6 @@ export function updateAnchorPosition(
   }
 
   if (upper === "V") {
-    const abs = toAbsoluteCommands(commands);
-    const absCmd = abs[commandIndex];
     const prevX = findPrevX(abs, commandIndex);
     if (Math.abs(newPosition.x - prevX) > 0.5) {
       result[commandIndex] = {
@@ -381,10 +381,6 @@ export function updateAnchorPosition(
     }
     return result;
   }
-
-  // Calculate delta in absolute space
-  const abs = toAbsoluteCommands(commands);
-  const absCmd = abs[commandIndex];
   if (!absCmd?.point) return result;
 
   const dx = newPosition.x - absCmd.point.x;
@@ -429,16 +425,19 @@ export function updateHandlePosition(
   const upper = cmd.type.toUpperCase();
   const isRel = cmd.type === cmd.type.toLowerCase() && cmd.type !== "z";
 
+  // Compute absolute commands once for all relativeize calls
+  const abs = toAbsoluteCommands(commands);
+
   if (handleType === "in") {
     // handleIn = cp2 for C, cp1 for S, cp for Q
     if (upper === "C" && cmd.cp2) {
-      const pos = isRel ? relativeize(commands, commandIndex, newPosition) : newPosition;
+      const pos = isRel ? relativeize(commands, commandIndex, newPosition, abs) : newPosition;
       result[commandIndex] = { ...cmd, cp2: { x: pos.x, y: pos.y } };
     } else if (upper === "S" && cmd.cp1) {
-      const pos = isRel ? relativeize(commands, commandIndex, newPosition) : newPosition;
+      const pos = isRel ? relativeize(commands, commandIndex, newPosition, abs) : newPosition;
       result[commandIndex] = { ...cmd, cp1: { x: pos.x, y: pos.y } };
     } else if (upper === "Q" && cmd.cp) {
-      const pos = isRel ? relativeize(commands, commandIndex, newPosition) : newPosition;
+      const pos = isRel ? relativeize(commands, commandIndex, newPosition, abs) : newPosition;
       result[commandIndex] = { ...cmd, cp: { x: pos.x, y: pos.y } };
     }
   } else {
@@ -453,10 +452,10 @@ export function updateHandlePosition(
       const nextIsRel = nextCmd.type === nextCmd.type.toLowerCase();
 
       if (nextUpper === "C" && nextCmd.cp1) {
-        const pos = nextIsRel ? relativeize(commands, nextIdx, newPosition) : newPosition;
+        const pos = nextIsRel ? relativeize(commands, nextIdx, newPosition, abs) : newPosition;
         result[nextIdx] = { ...nextCmd, cp1: { x: pos.x, y: pos.y } };
       } else if (nextUpper === "Q" && nextCmd.cp) {
-        const pos = nextIsRel ? relativeize(commands, nextIdx, newPosition) : newPosition;
+        const pos = nextIsRel ? relativeize(commands, nextIdx, newPosition, abs) : newPosition;
         result[nextIdx] = { ...nextCmd, cp: { x: pos.x, y: pos.y } };
       }
     }
@@ -467,8 +466,8 @@ export function updateHandlePosition(
 
 // ---------- Helpers ----------
 
-function relativeize(commands: PathCommand[], commandIndex: number, absPoint: Point): Point {
-  const abs = toAbsoluteCommands(commands);
+function relativeize(commands: PathCommand[], commandIndex: number, absPoint: Point, precomputedAbs?: PathCommand[]): Point {
+  const abs = precomputedAbs ?? toAbsoluteCommands(commands);
   let prevX = 0, prevY = 0;
   for (let i = commandIndex - 1; i >= 0; i--) {
     const p = abs[i];

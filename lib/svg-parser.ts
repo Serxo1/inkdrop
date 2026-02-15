@@ -19,6 +19,40 @@ export interface SvgLayer {
 
 const SHAPE_TAGS = ["path", "rect", "circle", "ellipse", "polygon", "line"];
 
+// ---------- Shared parse/serialize helpers ----------
+
+function parseSvgDocument(svgString: string): Document {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const errorNode = doc.querySelector("parsererror");
+  if (errorNode) {
+    throw new Error("Invalid SVG");
+  }
+  return doc;
+}
+
+function serializeSvgDocument(doc: Document): string {
+  const serializer = new XMLSerializer();
+  return serializer.serializeToString(doc.documentElement);
+}
+
+// ---------- Transform helpers ----------
+
+/**
+ * Collect all transform attributes from an element up to (but not including) the <svg> root.
+ * Returns them in document order (outermost first) so they can be concatenated.
+ */
+export function getAncestorTransformChain(el: Element): string[] {
+  const transforms: string[] = [];
+  let current: Element | null = el;
+  while (current && current.tagName.toLowerCase() !== "svg") {
+    const t = current.getAttribute("transform");
+    if (t) transforms.unshift(t);
+    current = current.parentElement;
+  }
+  return transforms;
+}
+
 export function parseTransform(el: Element): SvgTransform {
   const attr = el.getAttribute("transform") || "";
   let x = 0,
@@ -62,49 +96,51 @@ export function parseSvg(svgString: string): {
   svg: string;
   layers: SvgLayer[];
 } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const svgEl = doc.querySelector("svg");
+  try {
+    const doc = parseSvgDocument(svgString);
+    const svgEl = doc.querySelector("svg");
 
-  if (!svgEl) {
-    return { svg: svgString, layers: [] };
-  }
-
-  const layers: SvgLayer[] = [];
-  const counters: Record<string, number> = {};
-
-  const elements = svgEl.querySelectorAll(SHAPE_TAGS.join(","));
-
-  elements.forEach((el) => {
-    const tagName = el.tagName.toLowerCase();
-
-    if (!el.id) {
-      counters[tagName] = (counters[tagName] || 0) + 1;
-      el.id = `${tagName}-${counters[tagName]}`;
+    if (!svgEl) {
+      return { svg: svgString, layers: [] };
     }
 
-    const fill = getComputedFill(el);
-    const stroke = el.getAttribute("stroke") || "none";
-    const strokeWidth = el.getAttribute("stroke-width") || "1";
-    const opacity = el.getAttribute("opacity") || "1";
-    const transform = parseTransform(el);
+    const layers: SvgLayer[] = [];
+    const counters: Record<string, number> = {};
 
-    layers.push({
-      id: el.id,
-      tagName,
-      fill,
-      stroke,
-      strokeWidth,
-      opacity,
-      name: el.id,
-      transform,
+    const elements = svgEl.querySelectorAll(SHAPE_TAGS.join(","));
+
+    elements.forEach((el) => {
+      const tagName = el.tagName.toLowerCase();
+
+      if (!el.id) {
+        counters[tagName] = (counters[tagName] || 0) + 1;
+        el.id = `${tagName}-${counters[tagName]}`;
+      }
+
+      const fill = getComputedFill(el);
+      const stroke = el.getAttribute("stroke") || "none";
+      const strokeWidth = el.getAttribute("stroke-width") || "1";
+      const opacity = el.getAttribute("opacity") || "1";
+      const transform = parseTransform(el);
+
+      layers.push({
+        id: el.id,
+        tagName,
+        fill,
+        stroke,
+        strokeWidth,
+        opacity,
+        name: el.id,
+        transform,
+      });
     });
-  });
 
-  const serializer = new XMLSerializer();
-  const updatedSvg = serializer.serializeToString(svgEl);
+    const updatedSvg = serializeSvgDocument(doc);
 
-  return { svg: updatedSvg, layers };
+    return { svg: updatedSvg, layers };
+  } catch {
+    return { svg: svgString, layers: [] };
+  }
 }
 
 function getComputedFill(el: Element): string {
@@ -121,11 +157,14 @@ function getComputedFill(el: Element): string {
 }
 
 export function getElementFill(svgString: string, elementId: string): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
-  if (!el) return "#000000";
-  return getComputedFill(el);
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
+    if (!el) return "#000000";
+    return getComputedFill(el);
+  } catch {
+    return "#000000";
+  }
 }
 
 /**
@@ -137,30 +176,32 @@ export function updateSvgElement(
   attribute: string,
   value: string
 ): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
 
-  if (!el) return svgString;
+    if (!el) return svgString;
 
-  if (attribute === "fill" || attribute === "stroke") {
-    const style = el.getAttribute("style");
-    if (style) {
-      const cleaned = style
-        .replace(new RegExp(`${attribute}\\s*:[^;]+;?`), "")
-        .trim();
-      if (cleaned) {
-        el.setAttribute("style", cleaned);
-      } else {
-        el.removeAttribute("style");
+    if (attribute === "fill" || attribute === "stroke") {
+      const style = el.getAttribute("style");
+      if (style) {
+        const cleaned = style
+          .replace(new RegExp(`${attribute}\\s*:[^;]+;?`), "")
+          .trim();
+        if (cleaned) {
+          el.setAttribute("style", cleaned);
+        } else {
+          el.removeAttribute("style");
+        }
       }
     }
+
+    el.setAttribute(attribute, value);
+
+    return serializeSvgDocument(doc);
+  } catch {
+    return svgString;
   }
-
-  el.setAttribute(attribute, value);
-
-  const serializer = new XMLSerializer();
-  return serializer.serializeToString(doc.documentElement);
 }
 
 /**
@@ -171,21 +212,23 @@ export function updateSvgTransform(
   elementId: string,
   transform: SvgTransform
 ): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
 
-  if (!el) return svgString;
+    if (!el) return svgString;
 
-  const str = buildTransformString(transform);
-  if (str) {
-    el.setAttribute("transform", str);
-  } else {
-    el.removeAttribute("transform");
+    const str = buildTransformString(transform);
+    if (str) {
+      el.setAttribute("transform", str);
+    } else {
+      el.removeAttribute("transform");
+    }
+
+    return serializeSvgDocument(doc);
+  } catch {
+    return svgString;
   }
-
-  const serializer = new XMLSerializer();
-  return serializer.serializeToString(doc.documentElement);
 }
 
 /**
@@ -195,15 +238,17 @@ export function deleteSvgElement(
   svgString: string,
   elementId: string
 ): { svg: string; layers: SvgLayer[] } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
-  if (el) el.remove();
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
+    if (el) el.remove();
 
-  const serializer = new XMLSerializer();
-  const svg = serializer.serializeToString(doc.documentElement);
-  const { layers } = parseSvg(svg);
-  return { svg, layers };
+    const svg = serializeSvgDocument(doc);
+    const { layers } = parseSvg(svg);
+    return { svg, layers };
+  } catch {
+    return { svg: svgString, layers: [] };
+  }
 }
 
 /**
@@ -213,30 +258,32 @@ export function duplicateSvgElement(
   svgString: string,
   elementId: string
 ): { svg: string; layers: SvgLayer[]; newId: string } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
-  if (!el) return { svg: svgString, layers: [], newId: "" };
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
+    if (!el) return { svg: svgString, layers: [], newId: "" };
 
-  const clone = el.cloneNode(true) as Element;
-  const newId = `${elementId}-copy-${Date.now().toString(36)}`;
-  clone.id = newId;
+    const clone = el.cloneNode(true) as Element;
+    const newId = `${elementId}-copy-${Date.now().toString(36)}`;
+    clone.id = newId;
 
-  // Offset the clone slightly
-  const transform = parseTransform(clone);
-  transform.x += 10;
-  transform.y += 10;
-  const str = buildTransformString(transform);
-  if (str) {
-    clone.setAttribute("transform", str);
+    // Offset the clone slightly
+    const transform = parseTransform(clone);
+    transform.x += 10;
+    transform.y += 10;
+    const str = buildTransformString(transform);
+    if (str) {
+      clone.setAttribute("transform", str);
+    }
+
+    el.parentNode?.insertBefore(clone, el.nextSibling);
+
+    const svg = serializeSvgDocument(doc);
+    const { layers } = parseSvg(svg);
+    return { svg, layers, newId };
+  } catch {
+    return { svg: svgString, layers: [], newId: "" };
   }
-
-  el.parentNode?.insertBefore(clone, el.nextSibling);
-
-  const serializer = new XMLSerializer();
-  const svg = serializer.serializeToString(doc.documentElement);
-  const { layers } = parseSvg(svg);
-  return { svg, layers, newId };
 }
 
 /**
@@ -247,16 +294,18 @@ export function updateSvgPathD(
   elementId: string,
   newD: string
 ): string {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const el = doc.getElementById(elementId);
+  try {
+    const doc = parseSvgDocument(svgString);
+    const el = doc.getElementById(elementId);
 
-  if (!el || el.tagName.toLowerCase() !== "path") return svgString;
+    if (!el || el.tagName.toLowerCase() !== "path") return svgString;
 
-  el.setAttribute("d", newD);
+    el.setAttribute("d", newD);
 
-  const serializer = new XMLSerializer();
-  return serializer.serializeToString(doc.documentElement);
+    return serializeSvgDocument(doc);
+  } catch {
+    return svgString;
+  }
 }
 
 /**
@@ -267,56 +316,58 @@ export function randomizeColors(svgString: string, palette?: string[]): {
   svg: string;
   layers: SvgLayer[];
 } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgString, "image/svg+xml");
-  const svgEl = doc.querySelector("svg");
+  try {
+    const doc = parseSvgDocument(svgString);
+    const svgEl = doc.querySelector("svg");
 
-  if (!svgEl) return { svg: svgString, layers: [] };
+    if (!svgEl) return { svg: svgString, layers: [] };
 
-  const layers: SvgLayer[] = [];
-  const elements = svgEl.querySelectorAll(SHAPE_TAGS.join(","));
+    const layers: SvgLayer[] = [];
+    const elements = svgEl.querySelectorAll(SHAPE_TAGS.join(","));
 
-  // Generate a harmonious palette based on a random hue
-  const baseHue = Math.random() * 360;
+    // Generate a harmonious palette based on a random hue
+    const baseHue = Math.random() * 360;
 
-  // Shuffle palette if provided for variety
-  const shuffled = palette ? [...palette].sort(() => Math.random() - 0.5) : null;
+    // Shuffle palette if provided for variety
+    const shuffled = palette ? [...palette].sort(() => Math.random() - 0.5) : null;
 
-  elements.forEach((el, i) => {
-    const color = shuffled
-      ? shuffled[i % shuffled.length]
-      : hslToHex((baseHue + i * 37) % 360, 60 + Math.random() * 30, 45 + Math.random() * 30);
+    elements.forEach((el, i) => {
+      const color = shuffled
+        ? shuffled[i % shuffled.length]
+        : hslToHex((baseHue + i * 37) % 360, 60 + Math.random() * 30, 45 + Math.random() * 30);
 
-    // Remove fill from inline style
-    const style = el.getAttribute("style");
-    if (style) {
-      const cleaned = style.replace(/fill\s*:[^;]+;?/, "").trim();
-      if (cleaned) el.setAttribute("style", cleaned);
-      else el.removeAttribute("style");
-    }
+      // Remove fill from inline style
+      const style = el.getAttribute("style");
+      if (style) {
+        const cleaned = style.replace(/fill\s*:[^;]+;?/, "").trim();
+        if (cleaned) el.setAttribute("style", cleaned);
+        else el.removeAttribute("style");
+      }
 
-    el.setAttribute("fill", color);
+      el.setAttribute("fill", color);
 
-    const tagName = el.tagName.toLowerCase();
-    const stroke = el.getAttribute("stroke") || "none";
-    const strokeWidth = el.getAttribute("stroke-width") || "1";
-    const opacity = el.getAttribute("opacity") || "1";
-    const transform = parseTransform(el);
+      const tagName = el.tagName.toLowerCase();
+      const stroke = el.getAttribute("stroke") || "none";
+      const strokeWidth = el.getAttribute("stroke-width") || "1";
+      const opacity = el.getAttribute("opacity") || "1";
+      const transform = parseTransform(el);
 
-    layers.push({
-      id: el.id,
-      tagName,
-      fill: color,
-      stroke,
-      strokeWidth,
-      opacity,
-      name: el.id,
-      transform,
+      layers.push({
+        id: el.id,
+        tagName,
+        fill: color,
+        stroke,
+        strokeWidth,
+        opacity,
+        name: el.id,
+        transform,
+      });
     });
-  });
 
-  const serializer = new XMLSerializer();
-  return { svg: serializer.serializeToString(svgEl), layers };
+    return { svg: serializeSvgDocument(doc), layers };
+  } catch {
+    return { svg: svgString, layers: [] };
+  }
 }
 
 function hslToHex(h: number, s: number, l: number): string {
