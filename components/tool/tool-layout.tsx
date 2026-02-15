@@ -6,12 +6,14 @@ import {
   ChevronDown,
   Download,
   FolderOpen,
+  Layers,
   RotateCcw,
   Save,
   Shuffle,
   Undo2,
   Redo2,
   Check,
+  X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
@@ -66,6 +68,7 @@ export function ToolLayout() {
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [selectedPalette, setSelectedPalette] = useState<ColorPalette | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showProperties, setShowProperties] = useState(false);
 
   // Space-hold temporary pan
   const toolBeforeSpaceRef = useRef<ToolType | null>(null);
@@ -473,22 +476,22 @@ export function ToolLayout() {
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-background px-4">
+      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-background px-2 sm:h-14 sm:px-4">
         {/* Left: Logo + Gallery + Undo/Redo */}
-        <div className="flex items-center gap-1">
-          <Link href="/" className="flex items-center gap-2 pr-3">
-            <InkdropLogo size={28} />
-            <span className="text-sm font-bold text-foreground">Inkdrop</span>
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Link href="/" className="flex items-center gap-1.5 pr-1 sm:gap-2 sm:pr-3">
+            <InkdropLogo size={24} className="sm:h-7 sm:w-7" />
+            <span className="hidden text-sm font-bold text-foreground sm:inline">Inkdrop</span>
           </Link>
           <Link
             href="/gallery"
-            className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="hidden items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
           >
             <FolderOpen size={14} />
             {t.gallery.title}
           </Link>
 
-          <div className="mx-2 h-5 w-px bg-border" />
+          <div className="mx-1 h-5 w-px bg-border sm:mx-2" />
 
           <button
             onClick={handleUndo}
@@ -509,7 +512,7 @@ export function ToolLayout() {
         </div>
 
         {/* Center: File name + Project name */}
-        <div className="flex items-center gap-1.5">
+        <div className="hidden items-center gap-1.5 sm:flex">
           <span className="text-[13px] text-muted-foreground">{fileName}</span>
           <span className="text-[13px] text-muted-foreground">&mdash;</span>
           <input
@@ -521,23 +524,23 @@ export function ToolLayout() {
         </div>
 
         {/* Right: Reset + Randomize + Save + Export */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           <button
             onClick={handleReset}
             title={t.tool.reset}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md px-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2.5"
           >
             <RotateCcw size={14} />
-            <span className="hidden md:inline">{t.tool.reset}</span>
+            <span className="hidden lg:inline">{t.tool.reset}</span>
           </button>
           <div className="flex items-center">
             <button
               onClick={handleRandomize}
               title={t.tool.randomize}
-              className="inline-flex h-8 items-center gap-1.5 rounded-l-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="inline-flex h-8 items-center gap-1.5 rounded-l-md px-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:px-2.5"
             >
               <Shuffle size={14} />
-              <span className="hidden md:inline">
+              <span className="hidden lg:inline">
                 {selectedPalette
                   ? t.tool.palettes[selectedPalette.id as keyof typeof t.tool.palettes]
                   : t.tool.randomize}
@@ -588,29 +591,38 @@ export function ToolLayout() {
             </DropdownMenu>
           </div>
 
-          <AnimatedThemeToggler className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&_svg]:size-[15px]" />
+          <AnimatedThemeToggler className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex [&_svg]:size-[15px]" />
 
-          <div className="mx-1 h-5 w-px bg-border" />
+          <div className="mx-0.5 h-5 w-px bg-border sm:mx-1" />
 
           <button
             onClick={handleSave}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-3.5 text-[13px] text-foreground transition-colors hover:bg-muted"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2 text-[13px] text-foreground transition-colors hover:bg-muted sm:px-3.5"
           >
             <Save size={14} />
-            {saved ? "Saved!" : t.tool.save}
+            <span className="hidden sm:inline">{saved ? "Saved!" : t.tool.save}</span>
           </button>
           <button
             onClick={handleExport}
-            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3.5 text-[13px] text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-2 text-[13px] text-primary-foreground transition-colors hover:bg-primary/90 sm:px-3.5"
           >
             <Download size={14} />
-            {t.tool.export}
+            <span className="hidden sm:inline">{t.tool.export}</span>
+          </button>
+
+          {/* Mobile: toggle properties panel */}
+          <button
+            onClick={() => setShowProperties((v) => !v)}
+            title={t.tool.layers}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+          >
+            <Layers size={15} />
           </button>
         </div>
       </header>
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         <Toolbar
           activeTool={activeTool}
           onToolChange={handleToolChange}
@@ -636,16 +648,48 @@ export function ToolLayout() {
           onPathUpdateEnd={handlePathUpdateEnd}
           onZoom={handleZoom}
         />
-        <PropertiesPanel
-          layers={layers}
-          selectedLayerId={selectedLayerId}
-          onSelectLayer={(id) => handleSelectLayer(id)}
-          onUpdateFill={handleUpdateFill}
-          onUpdateStroke={handleUpdateStroke}
-          onUpdateStrokeWidth={handleUpdateStrokeWidth}
-          onUpdateOpacity={handleUpdateOpacity}
-          onUpdateTransform={handleUpdateTransform}
-        />
+
+        {/* Desktop: always visible properties panel */}
+        <div className="hidden md:block">
+          <PropertiesPanel
+            layers={layers}
+            selectedLayerId={selectedLayerId}
+            onSelectLayer={(id) => handleSelectLayer(id)}
+            onUpdateFill={handleUpdateFill}
+            onUpdateStroke={handleUpdateStroke}
+            onUpdateStrokeWidth={handleUpdateStrokeWidth}
+            onUpdateOpacity={handleUpdateOpacity}
+            onUpdateTransform={handleUpdateTransform}
+          />
+        </div>
+
+        {/* Mobile: slide-over properties panel */}
+        {showProperties && (
+          <div className="absolute inset-y-0 right-0 z-40 flex md:hidden">
+            <div
+              className="fixed inset-0 bg-black/30"
+              onClick={() => setShowProperties(false)}
+            />
+            <div className="relative flex flex-col border-l border-border bg-background shadow-xl">
+              <button
+                onClick={() => setShowProperties(false)}
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <X size={15} />
+              </button>
+              <PropertiesPanel
+                layers={layers}
+                selectedLayerId={selectedLayerId}
+                onSelectLayer={(id) => handleSelectLayer(id)}
+                onUpdateFill={handleUpdateFill}
+                onUpdateStroke={handleUpdateStroke}
+                onUpdateStrokeWidth={handleUpdateStrokeWidth}
+                onUpdateOpacity={handleUpdateOpacity}
+                onUpdateTransform={handleUpdateTransform}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <ShortcutsDialog
