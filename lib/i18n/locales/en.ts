@@ -74,12 +74,13 @@ export interface Translations {
     tools: {
       select: string;
       pan: string;
-      brush: string;
+      pen: string;
       bucket: string;
       eyedropper: string;
       zoomIn: string;
       zoomOut: string;
     };
+    shortcutLabels: Record<string, string>;
   };
   gallery: {
     title: string;
@@ -231,11 +232,33 @@ export const en: Translations = {
     tools: {
       select: "Select",
       pan: "Pan",
-      brush: "Brush",
+      pen: "Pen",
       bucket: "Fill",
       eyedropper: "Eyedropper",
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
+    },
+    shortcutLabels: {
+      title: "Keyboard shortcuts",
+      sectionTools: "Tools",
+      sectionNavigation: "Navigation",
+      sectionActions: "Actions",
+      select: "Select tool",
+      pan: "Pan tool",
+      pen: "Pen tool",
+      bucket: "Fill tool",
+      eyedropper: "Eyedropper",
+      holdPan: "Hold to pan",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      zoomScroll: "Zoom with scroll",
+      zoomReset: "Reset zoom",
+      undo: "Undo",
+      redo: "Redo",
+      save: "Save",
+      duplicate: "Duplicate layer",
+      delete: "Delete layer",
+      shortcuts: "Shortcuts",
     },
   },
   gallery: {

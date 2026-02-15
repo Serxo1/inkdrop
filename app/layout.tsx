@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/components/theme-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -21,7 +22,9 @@ export default function RootLayout({
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <body className="antialiased">
         <ThemeProvider>
-          <I18nProvider>{children}</I18nProvider>
+          <TooltipProvider>
+            <I18nProvider>{children}</I18nProvider>
+          </TooltipProvider>
         </ThemeProvider>
       </body>
     </html>

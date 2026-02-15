@@ -4,20 +4,27 @@ import { useRef } from "react";
 import {
   MousePointer2,
   Hand,
-  Paintbrush,
   PaintBucket,
   Pipette,
+  PenTool,
   ZoomIn,
   ZoomOut,
+  Keyboard,
   type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, useIsMac } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n";
+import { Kbd } from "@/components/ui/kbd";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 export type ToolType =
   | "select"
   | "pan"
-  | "brush"
+  | "pen"
   | "bucket"
   | "eyedropper"
   | "zoomIn"
@@ -26,7 +33,7 @@ export type ToolType =
 type ToolLabelKey =
   | "select"
   | "pan"
-  | "brush"
+  | "pen"
   | "bucket"
   | "eyedropper"
   | "zoomIn"
@@ -38,6 +45,7 @@ interface ToolbarProps {
   selectedColor: string;
   onColorChange: (color: string) => void;
   recentColors: string[];
+  onShowShortcuts?: () => void;
 }
 
 interface ToolDef {
@@ -50,7 +58,7 @@ interface ToolDef {
 const tools: ToolDef[] = [
   { id: "select", icon: MousePointer2, labelKey: "select", shortcut: "V" },
   { id: "pan", icon: Hand, labelKey: "pan", shortcut: "H" },
-  { id: "brush", icon: Paintbrush, labelKey: "brush", shortcut: "B" },
+  { id: "pen", icon: PenTool, labelKey: "pen", shortcut: "P" },
   { id: "bucket", icon: PaintBucket, labelKey: "bucket", shortcut: "G" },
 ];
 
@@ -66,44 +74,34 @@ export function Toolbar({
   selectedColor,
   onColorChange,
   recentColors,
+  onShowShortcuts,
 }: ToolbarProps) {
   const { t } = useI18n();
+  const isMac = useIsMac();
   const colorInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex w-12 flex-col items-center gap-1 border-r border-border bg-background py-3">
       {tools.map((tool) => (
-        <button
+        <ToolButton
           key={tool.id}
+          tool={tool}
+          active={activeTool === tool.id}
+          label={t.tool.tools[tool.labelKey]}
           onClick={() => onToolChange(tool.id)}
-          title={`${t.tool.tools[tool.labelKey]} (${tool.shortcut})`}
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-md transition-colors",
-            activeTool === tool.id
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          )}
-        >
-          <tool.icon size={18} />
-        </button>
+        />
       ))}
 
       <div className="mx-auto my-1 h-px w-6 bg-border" />
 
       {secondaryTools.map((tool) => (
-        <button
+        <ToolButton
           key={tool.id}
+          tool={tool}
+          active={activeTool === tool.id}
+          label={t.tool.tools[tool.labelKey]}
           onClick={() => onToolChange(tool.id)}
-          title={`${t.tool.tools[tool.labelKey]} (${tool.shortcut})`}
-          className={cn(
-            "flex h-9 w-9 items-center justify-center rounded-md transition-colors",
-            activeTool === tool.id
-              ? "bg-muted text-foreground"
-              : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-          )}
-        >
-          <tool.icon size={18} />
-        </button>
+        />
       ))}
 
       <div className="mx-auto my-1 h-px w-6 bg-border" />
@@ -142,6 +140,56 @@ export function Toolbar({
           ))}
         </div>
       )}
+
+      {/* Spacer + Shortcuts button at bottom */}
+      <div className="mt-auto" />
+      <Tooltip>
+        <TooltipTrigger
+          onClick={onShowShortcuts}
+          className="flex flex-col items-center gap-1 rounded-md py-1.5 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+        >
+          <Keyboard size={16} />
+          <span className="flex items-center gap-0.5">
+            <Kbd className="h-4 min-w-4 text-[10px]">{isMac ? "\u2318" : "^"}</Kbd>
+            <Kbd className="h-4 min-w-4 text-[10px]">K</Kbd>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="right">
+          {t.tool.shortcutLabels.title}
+        </TooltipContent>
+      </Tooltip>
     </div>
+  );
+}
+
+function ToolButton({
+  tool,
+  active,
+  label,
+  onClick,
+}: {
+  tool: ToolDef;
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        onClick={onClick}
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-md transition-colors",
+          active
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+        )}
+      >
+        <tool.icon size={18} />
+      </TooltipTrigger>
+      <TooltipContent side="right" className="flex items-center gap-2">
+        <span>{label}</span>
+        <Kbd>{tool.shortcut}</Kbd>
+      </TooltipContent>
+    </Tooltip>
   );
 }

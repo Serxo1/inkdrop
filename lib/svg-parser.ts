@@ -19,7 +19,7 @@ export interface SvgLayer {
 
 const SHAPE_TAGS = ["path", "rect", "circle", "ellipse", "polygon", "line"];
 
-function parseTransform(el: Element): SvgTransform {
+export function parseTransform(el: Element): SvgTransform {
   const attr = el.getAttribute("transform") || "";
   let x = 0,
     y = 0,
@@ -183,6 +183,77 @@ export function updateSvgTransform(
   } else {
     el.removeAttribute("transform");
   }
+
+  const serializer = new XMLSerializer();
+  return serializer.serializeToString(doc.documentElement);
+}
+
+/**
+ * Delete a shape element from the SVG and return updated SVG + layers.
+ */
+export function deleteSvgElement(
+  svgString: string,
+  elementId: string
+): { svg: string; layers: SvgLayer[] } {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const el = doc.getElementById(elementId);
+  if (el) el.remove();
+
+  const serializer = new XMLSerializer();
+  const svg = serializer.serializeToString(doc.documentElement);
+  const { layers } = parseSvg(svg);
+  return { svg, layers };
+}
+
+/**
+ * Duplicate a shape element. The clone gets a new id and a small translate offset.
+ */
+export function duplicateSvgElement(
+  svgString: string,
+  elementId: string
+): { svg: string; layers: SvgLayer[]; newId: string } {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const el = doc.getElementById(elementId);
+  if (!el) return { svg: svgString, layers: [], newId: "" };
+
+  const clone = el.cloneNode(true) as Element;
+  const newId = `${elementId}-copy-${Date.now().toString(36)}`;
+  clone.id = newId;
+
+  // Offset the clone slightly
+  const transform = parseTransform(clone);
+  transform.x += 10;
+  transform.y += 10;
+  const str = buildTransformString(transform);
+  if (str) {
+    clone.setAttribute("transform", str);
+  }
+
+  el.parentNode?.insertBefore(clone, el.nextSibling);
+
+  const serializer = new XMLSerializer();
+  const svg = serializer.serializeToString(doc.documentElement);
+  const { layers } = parseSvg(svg);
+  return { svg, layers, newId };
+}
+
+/**
+ * Update the `d` attribute of a path element.
+ */
+export function updateSvgPathD(
+  svgString: string,
+  elementId: string,
+  newD: string
+): string {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const el = doc.getElementById(elementId);
+
+  if (!el || el.tagName.toLowerCase() !== "path") return svgString;
+
+  el.setAttribute("d", newD);
 
   const serializer = new XMLSerializer();
   return serializer.serializeToString(doc.documentElement);

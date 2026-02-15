@@ -19,6 +19,9 @@ import {
   parseSvg,
   updateSvgElement,
   updateSvgTransform,
+  updateSvgPathD,
+  deleteSvgElement,
+  duplicateSvgElement,
   getElementFill,
   randomizeColors,
   type SvgLayer,
@@ -36,6 +39,7 @@ import {
 import { Toolbar, type ToolType } from "./toolbar";
 import { Canvas } from "./canvas";
 import { PropertiesPanel } from "./properties-panel";
+import { ShortcutsDialog } from "./shortcuts-dialog";
 
 const UPLOAD_KEY = "inkdrop-upload";
 const PROJECT_ID_KEY = "inkdrop-project-id";
@@ -60,6 +64,10 @@ export function ToolLayout() {
   const [saved, setSaved] = useState(false);
   const [recentColors, setRecentColors] = useState<string[]>([]);
   const [selectedPalette, setSelectedPalette] = useState<ColorPalette | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  // Space-hold temporary pan
+  const toolBeforeSpaceRef = useRef<ToolType | null>(null);
 
   // History for undo/redo
   const historyRef = useRef<HistoryEntry[]>([]);
@@ -135,7 +143,7 @@ export function ToolLayout() {
     setActiveTool(tool);
   }, []);
 
-  // Bucket/brush: apply selectedColor
+  // Bucket fill: apply selectedColor
   const handleBucketFill = useCallback(
     (elementId: string) => {
       const updated = updateSvgElement(svgContent, elementId, "fill", selectedColor);
@@ -242,6 +250,38 @@ export function ToolLayout() {
     pushHistory(svgContent, layers);
   }, [svgContent, layers]);
 
+  // Pen tool: update path `d` attribute during drag (no history push)
+  const handlePathUpdate = useCallback(
+    (elementId: string, newD: string) => {
+      const updated = updateSvgPathD(svgContent, elementId, newD);
+      setSvgContent(updated);
+    },
+    [svgContent]
+  );
+
+  // Pen tool: commit path change to history
+  const handlePathUpdateEnd = useCallback(() => {
+    pushHistory(svgContent, layers);
+  }, [svgContent, layers]);
+
+  // Delete selected layer
+  const handleDeleteLayer = useCallback(() => {
+    if (!selectedLayerId || !svgContent) return;
+    const { svg, layers: newLayers } = deleteSvgElement(svgContent, selectedLayerId);
+    applyChange(svg, newLayers);
+    setSelectedLayerId(null);
+  }, [svgContent, selectedLayerId]);
+
+  // Duplicate selected layer
+  const handleDuplicateLayer = useCallback(() => {
+    if (!selectedLayerId || !svgContent) return;
+    const { svg, layers: newLayers, newId } = duplicateSvgElement(svgContent, selectedLayerId);
+    if (newId) {
+      applyChange(svg, newLayers);
+      setSelectedLayerId(newId);
+    }
+  }, [svgContent, selectedLayerId]);
+
   const handleUndo = useCallback(() => {
     if (historyIndexRef.current <= 0) return;
     historyIndexRef.current -= 1;
@@ -311,25 +351,80 @@ export function ToolLayout() {
     URL.revokeObjectURL(url);
   }, [svgContent, fileName]);
 
+  // Zoom handler (for canvas scroll wheel)
+  const handleZoom = useCallback((delta: number) => {
+    setZoom((prev) => Math.max(25, Math.min(400, prev + delta)));
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
 
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "z") {
-        e.preventDefault();
-        handleRedo();
+      const mod = e.ctrlKey || e.metaKey;
+
+      // Cmd/Ctrl combos
+      if (mod) {
+        if (e.shiftKey && e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          handleRedo();
+          return;
+        }
+        if (e.key.toLowerCase() === "z") {
+          e.preventDefault();
+          handleUndo();
+          return;
+        }
+        if (e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          handleSave();
+          return;
+        }
+        if (e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          setShowShortcuts((prev) => !prev);
+          return;
+        }
+        if (e.key === "=" || e.key === "+") {
+          e.preventDefault();
+          setZoom((prev) => Math.min(prev + 25, 400));
+          return;
+        }
+        if (e.key === "-") {
+          e.preventDefault();
+          setZoom((prev) => Math.max(prev - 25, 25));
+          return;
+        }
+        if (e.key === "0") {
+          e.preventDefault();
+          setZoom(100);
+          return;
+        }
+        if (e.key.toLowerCase() === "d") {
+          e.preventDefault();
+          handleDuplicateLayer();
+          return;
+        }
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+
+      // Delete/Backspace to delete selected layer
+      if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
-        handleUndo();
+        handleDeleteLayer();
         return;
       }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+
+      // Space hold → temporary pan
+      if (e.key === " " && !e.repeat) {
         e.preventDefault();
-        handleSave();
+        setActiveTool((current) => {
+          if (current !== "pan") {
+            toolBeforeSpaceRef.current = current;
+          }
+          return "pan";
+        });
         return;
       }
 
@@ -340,11 +435,11 @@ export function ToolLayout() {
         case "h":
           setActiveTool("pan");
           break;
-        case "b":
-          setActiveTool("brush");
-          break;
         case "g":
           setActiveTool("bucket");
+          break;
+        case "p":
+          setActiveTool("pen");
           break;
         case "i":
           setActiveTool("eyedropper");
@@ -358,9 +453,21 @@ export function ToolLayout() {
           break;
       }
     }
+
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === " " && toolBeforeSpaceRef.current !== null) {
+        setActiveTool(toolBeforeSpaceRef.current);
+        toolBeforeSpaceRef.current = null;
+      }
+    }
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [handleSave, handleUndo, handleRedo]);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [handleSave, handleUndo, handleRedo, handleDeleteLayer, handleDuplicateLayer]);
 
   return (
     <div className="flex h-screen flex-col">
@@ -514,6 +621,7 @@ export function ToolLayout() {
             addRecentColor(c);
           }}
           recentColors={recentColors}
+          onShowShortcuts={() => setShowShortcuts(true)}
         />
         <Canvas
           svgContent={svgContent}
@@ -525,6 +633,9 @@ export function ToolLayout() {
           onEyedrop={handleEyedrop}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
+          onPathUpdate={handlePathUpdate}
+          onPathUpdateEnd={handlePathUpdateEnd}
+          onZoom={handleZoom}
         />
         <PropertiesPanel
           layers={layers}
@@ -537,6 +648,11 @@ export function ToolLayout() {
           onUpdateTransform={handleUpdateTransform}
         />
       </div>
+
+      <ShortcutsDialog
+        open={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+      />
     </div>
   );
 }

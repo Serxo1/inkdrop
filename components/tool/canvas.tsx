@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import type { ToolType } from "./toolbar";
+import { PathOverlay } from "./path-overlay";
 
 interface CanvasProps {
   svgContent: string;
@@ -15,6 +16,9 @@ interface CanvasProps {
   onEyedrop: (elementId: string) => void;
   onDragMove: (elementId: string, dx: number, dy: number) => void;
   onDragEnd: () => void;
+  onPathUpdate?: (elementId: string, newD: string) => void;
+  onPathUpdateEnd?: () => void;
+  onZoom?: (delta: number) => void;
 }
 
 const SHAPE_TAGS = new Set([
@@ -43,7 +47,7 @@ function findShapeElement(
 const TOOL_CURSORS: Record<string, string> = {
   select: "default",
   pan: "grab",
-  brush: "crosshair",
+  pen: "crosshair",
   bucket: "crosshair",
   eyedropper: "crosshair",
   zoomIn: "zoom-in",
@@ -60,9 +64,29 @@ export function Canvas({
   onEyedrop,
   onDragMove,
   onDragEnd,
+  onPathUpdate,
+  onPathUpdateEnd,
+  onZoom,
 }: CanvasProps) {
   const { t } = useI18n();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Cmd/Ctrl + scroll wheel zoom
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el || !onZoom) return;
+
+    function handleWheel(e: WheelEvent) {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        onZoom!(e.deltaY > 0 ? -25 : 25);
+      }
+    }
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [onZoom]);
 
   // Pan state
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -82,6 +106,18 @@ export function Canvas({
         panStart.current = { x: e.clientX, y: e.clientY };
         offsetStart.current = { ...offset };
         e.preventDefault();
+        return;
+      }
+
+      // Pen tool: click to select path (no drag-to-move)
+      if (activeTool === "pen") {
+        const target = e.target as Element;
+        const shape = findShapeElement(target, containerRef.current);
+        if (shape) {
+          onSelectLayer(shape.id);
+        } else {
+          onSelectLayer(null);
+        }
         return;
       }
 
@@ -137,7 +173,6 @@ export function Canvas({
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      // Don't fire click after a drag
       if (isDragging.current || isPanning.current) return;
 
       const target = e.target as Element;
@@ -148,7 +183,6 @@ export function Canvas({
           if (!shape) onSelectLayer(null);
           break;
         }
-        case "brush":
         case "bucket": {
           if (shape) onBucketFill(shape.id);
           break;
@@ -173,8 +207,15 @@ export function Canvas({
         ? "move"
         : TOOL_CURSORS[activeTool] || "default";
 
+  const showOverlay =
+    activeTool === "pen" &&
+    selectedLayerId &&
+    onPathUpdate &&
+    onPathUpdateEnd;
+
   return (
     <div
+      ref={wrapperRef}
       className="relative flex flex-1 items-center justify-center overflow-hidden bg-muted/30"
       style={{ cursor }}
       onMouseDown={handleMouseDown}
@@ -184,14 +225,29 @@ export function Canvas({
     >
       {svgContent ? (
         <div
-          ref={containerRef}
           className="flex items-center justify-center p-8"
           style={{
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom / 100})`,
           }}
           onClick={handleCanvasClick}
-          dangerouslySetInnerHTML={{ __html: svgWithStyles }}
-        />
+        >
+          {/* Relative wrapper so overlay aligns with SVG */}
+          <div className="relative">
+            <div
+              ref={containerRef}
+              dangerouslySetInnerHTML={{ __html: svgWithStyles }}
+            />
+            {showOverlay && (
+              <PathOverlay
+                svgContent={svgContent}
+                selectedLayerId={selectedLayerId}
+                zoom={zoom}
+                onPathUpdate={onPathUpdate}
+                onPathUpdateEnd={onPathUpdateEnd}
+              />
+            )}
+          </div>
+        </div>
       ) : (
         <div className="flex flex-col items-center gap-3">
           <ImageIcon size={48} className="text-muted-foreground/40" />
