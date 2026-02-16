@@ -10,7 +10,7 @@ import { GoogleAnalytics } from "@/components/google-analytics";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://inkdrop.polyaxis.com.br"),
+  metadataBase: new URL("https://inkdrop-alpha.vercel.app"),
   title: {
     default: "Inkdrop — Free Online SVG Editor",
     template: "%s | Inkdrop",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     icon: "/icon.svg",
   },
   alternates: {
-    canonical: "https://inkdrop.polyaxis.com.br",
+    canonical: "https://inkdrop-alpha.vercel.app",
   },
   openGraph: {
     title: "Inkdrop — Free Online SVG Editor",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
       "Recolor paths, reshape curves, move layers around. All in your browser. No account, no backend, no BS.",
     siteName: "Inkdrop",
     type: "website",
-    url: "https://inkdrop.polyaxis.com.br",
+    url: "https://inkdrop-alpha.vercel.app",
   },
   twitter: {
     card: "summary_large_image",

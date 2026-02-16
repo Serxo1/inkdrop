@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [],
     },
-    sitemap: "https://inkdrop.polyaxis.com.br/sitemap.xml",
+    sitemap: "https://inkdrop-alpha.vercel.app/sitemap.xml",
   };
 }

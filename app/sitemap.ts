@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = "https://inkdrop.polyaxis.com.br";
+const BASE_URL = "https://inkdrop-alpha.vercel.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
