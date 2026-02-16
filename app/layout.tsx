@@ -59,16 +59,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
-      {process.env.NEXT_PUBLIC_ADSENSE_ID && (
-        <head>
+      <body className="antialiased">
+        {process.env.NEXT_PUBLIC_ADSENSE_ID && (
           <Script
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_ID}`}
-            strategy="afterInteractive"
+            strategy="beforeInteractive"
             crossOrigin="anonymous"
           />
-        </head>
-      )}
-      <body className="antialiased">
+        )}
         <GoogleAnalytics />
         <ThemeProvider>
           <TooltipProvider>
