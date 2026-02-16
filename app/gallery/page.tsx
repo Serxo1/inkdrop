@@ -3,6 +3,7 @@
 import { EmptyState } from "@/components/gallery/empty-state";
 import { ProjectGrid } from "@/components/gallery/project-grid";
 import { Header } from "@/components/landing/header";
+import { AdSlot } from "@/components/ad-slot";
 import { useI18n } from "@/lib/i18n";
 import {
   deleteProject,
@@ -68,9 +69,17 @@ export default function GalleryPage() {
 
       <div className="px-8 pb-16 md:px-20">
         {projects.length === 0 ? (
-          <EmptyState />
+          <div className="flex flex-col items-center gap-10">
+            <EmptyState />
+            {/* Ad: mrec when gallery is empty — fills visual space */}
+            <AdSlot id="gallery-empty" size="mrec" />
+          </div>
         ) : (
-          <ProjectGrid projects={projects} onDelete={handleDelete} />
+          <div className="flex flex-col gap-10">
+            <ProjectGrid projects={projects} onDelete={handleDelete} />
+            {/* Ad: below project grid — in-feed style, non-intrusive */}
+            <AdSlot id="gallery-below-grid" size="leaderboard" />
+          </div>
         )}
       </div>
     </div>

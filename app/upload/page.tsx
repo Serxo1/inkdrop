@@ -3,6 +3,7 @@
 import { Header } from "@/components/landing/header";
 import { DropZone } from "@/components/upload/drop-zone";
 import { FeatureCards } from "@/components/upload/feature-cards";
+import { AdSlot } from "@/components/ad-slot";
 import { useI18n } from "@/lib/i18n";
 
 export default function UploadPage() {
@@ -26,6 +27,11 @@ export default function UploadPage() {
 
         <div className="mt-10">
           <FeatureCards />
+        </div>
+
+        {/* Ad: below feature cards — user already saw the main upload action */}
+        <div className="mt-12 w-full max-w-[480px]">
+          <AdSlot id="upload-bottom" size="leaderboard" />
         </div>
       </main>
     </div>

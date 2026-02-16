@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { useRecentColors } from "@/hooks/use-recent-colors";
 import { useEditorState } from "@/hooks/use-editor-state";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { AdSlot } from "@/components/ad-slot";
 import { EditorHeader } from "./editor-header";
 import { Toolbar, type ToolType } from "./toolbar";
 import { Canvas } from "./canvas";
@@ -155,6 +156,11 @@ export function ToolLayout() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Ad: slim bottom bar — stays out of the editor workspace */}
+      <div className="flex shrink-0 items-center justify-center border-t border-border bg-background px-2 py-1.5">
+        <AdSlot id="tool-bottom" size="banner" className="h-[50px]" />
       </div>
 
       <ShortcutsDialog
