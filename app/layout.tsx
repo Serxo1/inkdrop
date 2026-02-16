@@ -11,22 +11,42 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://inkdrop.polyaxis.com.br"),
-  title: "Inkdrop — Edit SVGs like you mean it",
+  title: {
+    default: "Inkdrop — Free Online SVG Editor",
+    template: "%s | Inkdrop",
+  },
   description:
     "Recolor paths, reshape curves, move layers around. All in your browser. No account. No backend. No BS. A free tool by Polyaxis.",
+  keywords: [
+    "SVG editor",
+    "free SVG editor",
+    "online SVG editor",
+    "edit SVG online",
+    "SVG color changer",
+    "recolor SVG",
+    "SVG tool",
+    "vector editor",
+    "browser SVG editor",
+  ],
+  authors: [{ name: "Polyaxis", url: "https://polyaxis.com.br" }],
+  creator: "Polyaxis",
   icons: {
     icon: "/icon.svg",
   },
+  alternates: {
+    canonical: "https://inkdrop.polyaxis.com.br",
+  },
   openGraph: {
-    title: "Inkdrop — Edit SVGs like you mean it",
+    title: "Inkdrop — Free Online SVG Editor",
     description:
       "Recolor paths, reshape curves, move layers around. All in your browser. No account, no backend, no BS.",
     siteName: "Inkdrop",
     type: "website",
+    url: "https://inkdrop.polyaxis.com.br",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Inkdrop — Edit SVGs like you mean it",
+    title: "Inkdrop — Free Online SVG Editor",
     description:
       "Recolor paths, reshape curves, move layers around. All in your browser. Free and open source.",
   },
