@@ -15,7 +15,7 @@ export default function Page() {
 
       {/* Ad: between How It Works and Features — natural content break */}
       <div className="flex justify-center px-6 py-8">
-        <AdSlot id="landing-mid" size="leaderboard" />
+        <AdSlot id="7470629890" size="leaderboard" />
       </div>
 
       <Features />
@@ -23,7 +23,7 @@ export default function Page() {
 
       {/* Ad: above footer — below-the-fold, non-intrusive */}
       <div className="flex justify-center px-6 pb-10">
-        <AdSlot id="landing-footer" size="leaderboard" />
+        <AdSlot id="7219348454" size="leaderboard" />
       </div>
 
       <Footer />

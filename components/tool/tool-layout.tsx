@@ -160,7 +160,7 @@ export function ToolLayout() {
 
       {/* Ad: slim bottom bar — stays out of the editor workspace */}
       <div className="flex shrink-0 items-center justify-center border-t border-border bg-background px-2 py-1.5">
-        <AdSlot id="tool-bottom" size="banner" className="h-[50px]" />
+        <AdSlot id="2568832595" size="banner" className="h-[50px]" />
       </div>
 
       <ShortcutsDialog

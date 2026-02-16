@@ -72,13 +72,13 @@ export default function GalleryPage() {
           <div className="flex flex-col items-center gap-10">
             <EmptyState />
             {/* Ad: mrec when gallery is empty — fills visual space */}
-            <AdSlot id="gallery-empty" size="mrec" />
+            <AdSlot id="8288887545" size="mrec" />
           </div>
         ) : (
           <div className="flex flex-col gap-10">
             <ProjectGrid projects={projects} onDelete={handleDelete} />
             {/* Ad: below project grid — in-feed style, non-intrusive */}
-            <AdSlot id="gallery-below-grid" size="leaderboard" />
+            <AdSlot id="4815721982" size="leaderboard" />
           </div>
         )}
       </div>

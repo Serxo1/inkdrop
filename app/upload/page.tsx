@@ -31,7 +31,7 @@ export default function UploadPage() {
 
         {/* Ad: below feature cards — user already saw the main upload action */}
         <div className="mt-12 w-full max-w-[480px]">
-          <AdSlot id="upload-bottom" size="leaderboard" />
+          <AdSlot id="2189558647" size="leaderboard" />
         </div>
       </main>
     </div>
