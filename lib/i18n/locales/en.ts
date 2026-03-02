@@ -54,6 +54,14 @@ export interface Translations {
     untitledProject: string;
     save: string;
     export: string;
+    exportAs: string;
+    exportFormats: {
+      svg: string;
+      png: string;
+      jpeg: string;
+      webp: string;
+      copySvg: string;
+    };
     undo: string;
     redo: string;
     reset: string;
@@ -223,6 +231,14 @@ export const en: Translations = {
     untitledProject: "Untitled Project",
     save: "Save",
     export: "Export",
+    exportAs: "Export as",
+    exportFormats: {
+      svg: "SVG file",
+      png: "PNG image",
+      jpeg: "JPEG image",
+      webp: "WebP image",
+      copySvg: "Copy SVG code",
+    },
     undo: "Undo",
     redo: "Redo",
     reset: "Reset",

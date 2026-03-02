@@ -14,6 +14,7 @@ import {
   type SvgTransform,
 } from "@/lib/svg-parser";
 import { saveProject, updateProject, getProject } from "@/lib/storage";
+import { exportSvg, copySvgCode, type ExportFormat } from "@/lib/svg-export";
 import type { ColorPalette } from "@/lib/color-palettes";
 import type { ToolType } from "@/components/tool/toolbar";
 
@@ -41,6 +42,7 @@ export function useEditorState(deps: {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState(defaultProjectName);
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [selectedPalette, setSelectedPalette] = useState<ColorPalette | null>(null);
 
   // History for undo/redo
@@ -298,16 +300,25 @@ export function useEditorState(deps: {
 
   const handleExport = useCallback(() => {
     if (!svgContent) return;
-    const blob = new Blob([svgContent], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportSvg({ svgContent, fileName, format: "svg" });
   }, [svgContent, fileName]);
+
+  const handleExportAs = useCallback(
+    (format: ExportFormat) => {
+      if (!svgContent) return;
+      exportSvg({ svgContent, fileName, format });
+    },
+    [svgContent, fileName]
+  );
+
+  const handleCopySvg = useCallback(async () => {
+    if (!svgContent) return;
+    const ok = await copySvgCode(svgContent);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [svgContent]);
 
   // Zoom handler (for canvas scroll wheel)
   const handleZoom = useCallback((delta: number) => {
@@ -325,6 +336,7 @@ export function useEditorState(deps: {
     projectName,
     setProjectName,
     saved,
+    copied,
     selectedPalette,
     setSelectedPalette,
     canUndo,
@@ -351,6 +363,8 @@ export function useEditorState(deps: {
     handleRandomize,
     handleSave,
     handleExport,
+    handleExportAs,
+    handleCopySvg,
     handleZoom,
   };
 }

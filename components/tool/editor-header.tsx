@@ -3,7 +3,10 @@
 import Link from "next/link";
 import {
   ChevronDown,
+  ClipboardCopy,
   Download,
+  FileImage,
+  FileCode2,
   FolderOpen,
   Layers,
   RotateCcw,
@@ -13,6 +16,7 @@ import {
   Redo2,
   Check,
 } from "lucide-react";
+import type { ExportFormat } from "@/lib/svg-export";
 import { useI18n } from "@/lib/i18n";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { COLOR_PALETTES, type ColorPalette } from "@/lib/color-palettes";
@@ -37,7 +41,10 @@ interface EditorHeaderProps {
   onRandomize: () => void;
   onSave: () => void;
   onExport: () => void;
+  onExportAs: (format: ExportFormat) => void;
+  onCopySvg: () => void;
   saved: boolean;
+  copied: boolean;
   selectedPalette: ColorPalette | null;
   onSelectPalette: (palette: ColorPalette | null) => void;
   onToggleProperties: () => void;
@@ -55,7 +62,10 @@ export function EditorHeader({
   onRandomize,
   onSave,
   onExport,
+  onExportAs,
+  onCopySvg,
   saved,
+  copied,
   selectedPalette,
   onSelectPalette,
   onToggleProperties,
@@ -189,13 +199,60 @@ export function EditorHeader({
           <Save size={14} />
           <span className="hidden sm:inline">{saved ? "Saved!" : t.tool.save}</span>
         </button>
-        <button
-          onClick={onExport}
-          className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-2 text-[13px] text-primary-foreground transition-colors hover:bg-primary/90 sm:px-3.5"
-        >
-          <Download size={14} />
-          <span className="hidden sm:inline">{t.tool.export}</span>
-        </button>
+        <div className="flex items-center">
+          <button
+            onClick={onExport}
+            className="inline-flex h-8 items-center gap-1.5 rounded-l-md bg-primary px-2 text-[13px] text-primary-foreground transition-colors hover:bg-primary/90 sm:px-3.5"
+          >
+            <Download size={14} />
+            <span className="hidden sm:inline">{t.tool.export}</span>
+          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-8 items-center rounded-r-md border-l border-primary-foreground/20 bg-primary px-1.5 text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <ChevronDown size={12} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => onExportAs("svg")}
+                className="flex items-center gap-2"
+              >
+                <FileCode2 size={14} className="text-muted-foreground" />
+                {t.tool.exportFormats.svg}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onExportAs("png")}
+                className="flex items-center gap-2"
+              >
+                <FileImage size={14} className="text-muted-foreground" />
+                {t.tool.exportFormats.png}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onExportAs("jpeg")}
+                className="flex items-center gap-2"
+              >
+                <FileImage size={14} className="text-muted-foreground" />
+                {t.tool.exportFormats.jpeg}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onExportAs("webp")}
+                className="flex items-center gap-2"
+              >
+                <FileImage size={14} className="text-muted-foreground" />
+                {t.tool.exportFormats.webp}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onCopySvg}
+                className="flex items-center gap-2"
+              >
+                <ClipboardCopy size={14} className="text-muted-foreground" />
+                {copied ? "Copied!" : t.tool.exportFormats.copySvg}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         {/* Mobile: toggle properties panel */}
         <button

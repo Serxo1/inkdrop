@@ -81,7 +81,10 @@ export function ToolLayout() {
         onRandomize={editor.handleRandomize}
         onSave={editor.handleSave}
         onExport={editor.handleExport}
+        onExportAs={editor.handleExportAs}
+        onCopySvg={editor.handleCopySvg}
         saved={editor.saved}
+        copied={editor.copied}
         selectedPalette={editor.selectedPalette}
         onSelectPalette={editor.setSelectedPalette}
         onToggleProperties={() => setShowProperties((v) => !v)}
