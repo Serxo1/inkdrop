@@ -3,6 +3,7 @@
 import { Header } from "@/components/landing/header";
 import { DropZone } from "@/components/upload/drop-zone";
 import { FeatureCards } from "@/components/upload/feature-cards";
+import { UseCases } from "@/components/upload/use-cases";
 import { AdSlot } from "@/components/ad-slot";
 import { useI18n } from "@/lib/i18n";
 
@@ -13,7 +14,7 @@ export default function UploadPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 pb-16">
+      <main className="flex flex-1 flex-col items-center px-6 pb-16 pt-16">
         <h1 className="text-center text-[40px] font-extrabold leading-tight tracking-tight">
           {t.upload.title}
         </h1>
@@ -33,6 +34,8 @@ export default function UploadPage() {
         <div className="mt-12 w-full max-w-[480px]">
           <AdSlot id="2189558647" size="leaderboard" />
         </div>
+
+        <UseCases />
       </main>
     </div>
   );

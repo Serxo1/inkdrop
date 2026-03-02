@@ -13,6 +13,16 @@ interface UploadFeature {
   description: string;
 }
 
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+interface UseCase {
+  title: string;
+  description: string;
+}
+
 export interface Translations {
   header: { howItWorks: string; gallery: string; github: string; openTool: string };
   hero: {
@@ -97,6 +107,17 @@ export interface Translations {
     minutesAgo: string;
     hoursAgo: string;
     daysAgo: string;
+    whyUseTitle: string;
+    whyUseItems: [UseCase, UseCase, UseCase, UseCase];
+  };
+  faq: {
+    title: string;
+    subtitle: string;
+    items: [FaqItem, FaqItem, FaqItem, FaqItem, FaqItem, FaqItem, FaqItem, FaqItem];
+  };
+  uploadUseCases: {
+    title: string;
+    items: [UseCase, UseCase, UseCase, UseCase, UseCase, UseCase];
   };
 }
 
@@ -276,5 +297,91 @@ export const en: Translations = {
     minutesAgo: "min ago",
     hoursAgo: "hours ago",
     daysAgo: "days ago",
+    whyUseTitle: "What can you do with Inkdrop?",
+    whyUseItems: [
+      {
+        title: "Recolor icons",
+        description: "Change icon colors to match your brand palette in seconds — no design software needed.",
+      },
+      {
+        title: "Customize illustrations",
+        description: "Swap colors in complex illustrations to fit dark mode, seasonal themes, or client preferences.",
+      },
+      {
+        title: "Prepare design system assets",
+        description: "Generate color variants of SVG components for use across your design system or component library.",
+      },
+      {
+        title: "Export clean SVG",
+        description: "Download optimized SVG files ready to drop into any web project, app, or document.",
+      },
+    ],
+  },
+  faq: {
+    title: "Frequently asked questions",
+    subtitle: "Everything you need to know about Inkdrop.",
+    items: [
+      {
+        question: "What is Inkdrop?",
+        answer: "Inkdrop is a free, browser-based SVG editor that lets you recolor paths, adjust bezier curves, move layers, and export clean SVG files. It runs entirely in your browser — no account, no installation, and no backend required.",
+      },
+      {
+        question: "Is Inkdrop free to use?",
+        answer: "Yes, completely free. Inkdrop is open source under the MIT license. You can use it for personal and commercial projects without any cost or attribution requirement.",
+      },
+      {
+        question: "Do my files get uploaded to a server?",
+        answer: "No. Your SVG files never leave your device. All processing happens locally in your browser. We do not store, track, or transmit your files in any way.",
+      },
+      {
+        question: "What SVG files are supported?",
+        answer: "Inkdrop supports any valid SVG file up to 5MB. This includes icons, illustrations, logos, and diagrams exported from tools like Figma, Illustrator, Sketch, or hand-coded SVGs.",
+      },
+      {
+        question: "How do I save my work?",
+        answer: "Click the Save button or press Cmd/Ctrl+S to save your project to your browser's local storage. Your projects persist between sessions — close the tab and come back later and everything will still be there.",
+      },
+      {
+        question: "Can I edit individual paths and curves?",
+        answer: "Yes. Use the pen tool (shortcut: P) to edit bezier curves and anchor points on any path. You can also select, move, scale, and rotate individual layers independently.",
+      },
+      {
+        question: "Can I undo changes?",
+        answer: "Yes. Inkdrop has full undo/redo support. Press Cmd/Ctrl+Z to undo and Cmd/Ctrl+Shift+Z to redo. You can step back through your entire edit history.",
+      },
+      {
+        question: "Which browsers are supported?",
+        answer: "Inkdrop works in all modern browsers including Chrome, Firefox, Safari, and Edge. For the best experience we recommend a Chromium-based browser (Chrome or Edge) on desktop.",
+      },
+    ],
+  },
+  uploadUseCases: {
+    title: "What people use Inkdrop for",
+    items: [
+      {
+        title: "Dark mode icon variants",
+        description: "Quickly generate light and dark variants of any icon set by swapping fill colors in bulk.",
+      },
+      {
+        title: "Brand color updates",
+        description: "Rebrand SVG assets after a color palette change without opening Figma or Illustrator.",
+      },
+      {
+        title: "Illustration theming",
+        description: "Apply seasonal or campaign-specific color themes to multi-layered SVG illustrations.",
+      },
+      {
+        title: "UI component assets",
+        description: "Create color variants of SVG components for use in design systems and component libraries.",
+      },
+      {
+        title: "Logo customization",
+        description: "Produce color-accurate logo files for different backgrounds — white, black, or branded.",
+      },
+      {
+        title: "Print & export prep",
+        description: "Adjust SVG colors to match CMYK requirements or specific Pantone values before export.",
+      },
+    ],
   },
 };

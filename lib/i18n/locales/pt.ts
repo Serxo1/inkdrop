@@ -176,5 +176,91 @@ export const pt: Translations = {
     minutesAgo: "min atrás",
     hoursAgo: "horas atrás",
     daysAgo: "dias atrás",
+    whyUseTitle: "O que você pode fazer com o Inkdrop?",
+    whyUseItems: [
+      {
+        title: "Recolorir ícones",
+        description: "Mude as cores dos ícones para combinar com sua paleta de marca em segundos — sem precisar de software de design.",
+      },
+      {
+        title: "Personalizar ilustrações",
+        description: "Troque cores em ilustrações complexas para modo escuro, temas sazonais ou preferências de clientes.",
+      },
+      {
+        title: "Preparar assets de design system",
+        description: "Gere variações de cor de componentes SVG para uso em design systems ou bibliotecas de componentes.",
+      },
+      {
+        title: "Exportar SVG limpo",
+        description: "Baixe arquivos SVG otimizados prontos para usar em qualquer projeto web, app ou documento.",
+      },
+    ],
+  },
+  faq: {
+    title: "Perguntas frequentes",
+    subtitle: "Tudo o que você precisa saber sobre o Inkdrop.",
+    items: [
+      {
+        question: "O que é o Inkdrop?",
+        answer: "O Inkdrop é um editor de SVG gratuito, baseado em navegador, que permite recolorir paths, ajustar curvas bezier, mover camadas e exportar arquivos SVG limpos. Funciona inteiramente no navegador — sem conta, sem instalação e sem backend.",
+      },
+      {
+        question: "O Inkdrop é gratuito?",
+        answer: "Sim, completamente gratuito. O Inkdrop é open source sob a licença MIT. Você pode usá-lo em projetos pessoais e comerciais sem nenhum custo ou necessidade de atribuição.",
+      },
+      {
+        question: "Meus arquivos são enviados para um servidor?",
+        answer: "Não. Seus arquivos SVG nunca saem do seu dispositivo. Todo o processamento acontece localmente no seu navegador. Não armazenamos, rastreamos ou transmitimos seus arquivos de nenhuma forma.",
+      },
+      {
+        question: "Quais arquivos SVG são suportados?",
+        answer: "O Inkdrop suporta qualquer arquivo SVG válido de até 5MB. Isso inclui ícones, ilustrações, logos e diagramas exportados de ferramentas como Figma, Illustrator, Sketch ou SVGs escritos à mão.",
+      },
+      {
+        question: "Como salvo meu trabalho?",
+        answer: "Clique no botão Salvar ou pressione Cmd/Ctrl+S para salvar seu projeto no armazenamento local do navegador. Seus projetos persistem entre sessões — feche a aba e volte depois que tudo ainda estará lá.",
+      },
+      {
+        question: "Posso editar paths e curvas individualmente?",
+        answer: "Sim. Use a ferramenta caneta (atalho: P) para editar curvas bezier e pontos de ancoragem em qualquer path. Você também pode selecionar, mover, escalar e rotacionar camadas individualmente.",
+      },
+      {
+        question: "Posso desfazer alterações?",
+        answer: "Sim. O Inkdrop tem suporte completo a desfazer/refazer. Pressione Cmd/Ctrl+Z para desfazer e Cmd/Ctrl+Shift+Z para refazer. Você pode voltar por todo o histórico de edições.",
+      },
+      {
+        question: "Quais navegadores são suportados?",
+        answer: "O Inkdrop funciona em todos os navegadores modernos, incluindo Chrome, Firefox, Safari e Edge. Para a melhor experiência, recomendamos um navegador baseado em Chromium (Chrome ou Edge) no desktop.",
+      },
+    ],
+  },
+  uploadUseCases: {
+    title: "Para o que as pessoas usam o Inkdrop",
+    items: [
+      {
+        title: "Variantes de ícone para modo escuro",
+        description: "Gere rapidamente variantes claras e escuras de qualquer conjunto de ícones trocando cores de preenchimento.",
+      },
+      {
+        title: "Atualização de cores de marca",
+        description: "Remarca assets SVG após uma mudança de paleta de cores sem abrir o Figma ou Illustrator.",
+      },
+      {
+        title: "Tematização de ilustrações",
+        description: "Aplique temas de cores sazonais ou de campanha em ilustrações SVG com múltiplas camadas.",
+      },
+      {
+        title: "Assets de componentes UI",
+        description: "Crie variantes de cores de componentes SVG para uso em design systems e bibliotecas de componentes.",
+      },
+      {
+        title: "Personalização de logo",
+        description: "Produza arquivos de logo com cores precisas para diferentes fundos — branco, preto ou com a marca.",
+      },
+      {
+        title: "Preparação para impressão e exportação",
+        description: "Ajuste cores de SVG para combinar com requisitos CMYK ou valores Pantone específicos antes de exportar.",
+      },
+    ],
   },
 };
