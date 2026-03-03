@@ -144,6 +144,7 @@ export const pt: Translations = {
     removeFromFolder: "Remover da pasta",
     newFolderWith: "Nova pasta com esta camada",
     folderName: "Pasta",
+    mixed: "misto",
     emptyCanvas: "Canvas SVG",
     tools: {
       select: "Selecionar",

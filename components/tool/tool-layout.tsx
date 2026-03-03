@@ -124,11 +124,6 @@ export function ToolLayout() {
             layers={editor.layers}
             selectedLayerId={editor.selectedLayerId}
             onSelectLayer={(id) => editor.handleSelectLayer(id)}
-            onUpdateFill={editor.handleUpdateFill}
-            onUpdateStroke={editor.handleUpdateStroke}
-            onUpdateStrokeWidth={editor.handleUpdateStrokeWidth}
-            onUpdateOpacity={editor.handleUpdateOpacity}
-            onUpdateTransform={editor.handleUpdateTransform}
             onBatchUpdateFill={editor.handleBatchUpdateFill}
             onBatchUpdateStroke={editor.handleBatchUpdateStroke}
             onBatchUpdateStrokeWidth={editor.handleBatchUpdateStrokeWidth}
@@ -161,11 +156,6 @@ export function ToolLayout() {
                 layers={editor.layers}
                 selectedLayerId={editor.selectedLayerId}
                 onSelectLayer={(id) => editor.handleSelectLayer(id)}
-                onUpdateFill={editor.handleUpdateFill}
-                onUpdateStroke={editor.handleUpdateStroke}
-                onUpdateStrokeWidth={editor.handleUpdateStrokeWidth}
-                onUpdateOpacity={editor.handleUpdateOpacity}
-                onUpdateTransform={editor.handleUpdateTransform}
                 onBatchUpdateFill={editor.handleBatchUpdateFill}
                 onBatchUpdateStroke={editor.handleBatchUpdateStroke}
                 onBatchUpdateStrokeWidth={editor.handleBatchUpdateStrokeWidth}

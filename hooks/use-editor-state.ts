@@ -114,17 +114,17 @@ export function useEditorState(deps: {
     setSelectedLayerId(id);
   }, []);
 
-  // Generic attribute update handler
+  // Generic attribute update handler — uses refs to avoid stale closures during rapid edits
   const handleUpdateAttribute = useCallback(
     (id: string, attribute: string, field: string, value: string) => {
-      const updated = updateSvgElement(svgContent, id, attribute, value);
-      const newLayers = layers.map((l) =>
+      const updated = updateSvgElement(svgContentRef.current, id, attribute, value);
+      const newLayers = layersRef.current.map((l) =>
         l.id === id ? { ...l, [field]: value } : l
       );
       applyChange(updated, newLayers);
       if (attribute === "fill" || attribute === "stroke") addRecentColor(value);
     },
-    [svgContent, layers, addRecentColor]
+    [addRecentColor]
   );
 
   const handleUpdateFill = useCallback(

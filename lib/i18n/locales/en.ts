@@ -88,6 +88,7 @@ export interface Translations {
     transform: string;
     rotation: string;
     scale: string;
+    mixed: string;
     emptyCanvas: string;
     tools: {
       select: string;
@@ -281,6 +282,7 @@ export const en: Translations = {
     removeFromFolder: "Remove from folder",
     newFolderWith: "New folder with this layer",
     folderName: "Folder",
+    mixed: "mixed",
     emptyCanvas: "SVG canvas",
     tools: {
       select: "Select",

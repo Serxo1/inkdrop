@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { SvgLayer, SvgTransform, LayerGroup } from "@/lib/svg-parser";
@@ -17,11 +17,6 @@ interface PropertiesPanelProps {
   layers: SvgLayer[];
   selectedLayerId: string | null;
   onSelectLayer: (id: string | null) => void;
-  onUpdateFill: (id: string, color: string) => void;
-  onUpdateStroke: (id: string, color: string) => void;
-  onUpdateStrokeWidth: (id: string, width: string) => void;
-  onUpdateOpacity: (id: string, opacity: string) => void;
-  onUpdateTransform: (id: string, transform: SvgTransform) => void;
   onBatchUpdateFill: (ids: string[], color: string) => void;
   onBatchUpdateStroke: (ids: string[], color: string) => void;
   onBatchUpdateStrokeWidth: (ids: string[], width: string) => void;
@@ -42,6 +37,11 @@ interface ContextMenuState {
   targetId: string;
 }
 
+const panelSmInputClass =
+  "h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+const panelTextInputClass =
+  "h-8 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 function toHex(color: string): string {
   if (!color || color === "none") return "#000000";
   if (color.startsWith("#") && color.length === 7) return color;
@@ -55,11 +55,6 @@ export const PropertiesPanel = memo(function PropertiesPanel({
   layers,
   selectedLayerId,
   onSelectLayer,
-  onUpdateFill,
-  onUpdateStroke,
-  onUpdateStrokeWidth,
-  onUpdateOpacity,
-  onUpdateTransform,
   onBatchUpdateFill,
   onBatchUpdateStroke,
   onBatchUpdateStrokeWidth,
@@ -88,34 +83,67 @@ export const PropertiesPanel = memo(function PropertiesPanel({
   const [dragOverUngrouped, setDragOverUngrouped] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
+  // O(1) layer lookups by id
+  const layerMap = useMemo(() => new Map(layers.map((l) => [l.id, l])), [layers]);
+
+  // Reverse lookup: layerId → groupId (also gives us the set of grouped ids)
+  const layerToGroupMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const g of groups) {
+      for (const lid of g.layerIds) map.set(lid, g.id);
+    }
+    return map;
+  }, [groups]);
+
+  const ungroupedLayers = useMemo(
+    () => layers.filter((l) => !layerToGroupMap.has(l.id)),
+    [layers, layerToGroupMap]
+  );
+
   // The "active layers" are either the single selected layer or all layers in the selected group.
   const selectedGroup = selectedGroupId
     ? groups.find((g) => g.id === selectedGroupId) ?? null
     : null;
-  const activeLayers: SvgLayer[] = selectedGroup
-    ? selectedGroup.layerIds
-        .map((id) => layers.find((l) => l.id === id))
-        .filter(Boolean) as SvgLayer[]
-    : selectedLayerId
-      ? layers.filter((l) => l.id === selectedLayerId)
-      : [];
+
+  const activeLayers = useMemo(() => {
+    if (selectedGroup) {
+      return selectedGroup.layerIds
+        .map((id) => layerMap.get(id))
+        .filter(Boolean) as SvgLayer[];
+    }
+    if (selectedLayerId) {
+      const l = layerMap.get(selectedLayerId);
+      return l ? [l] : [];
+    }
+    return [];
+  }, [selectedGroup, selectedLayerId, layerMap]);
+
+  const activeIds = useMemo(() => activeLayers.map((l) => l.id), [activeLayers]);
+  const activeLayerIds = useMemo(() => new Set(activeIds), [activeIds]);
 
   // Representative layer for displaying values (first in selection)
   const displayLayer = activeLayers[0] ?? null;
   const hasSelection = activeLayers.length > 0;
   const isGroupSelection = selectedGroup !== null && activeLayers.length > 1;
 
-  // Check if all layers share the same value for a field
-  function sharedValue<K extends keyof SvgLayer>(field: K): SvgLayer[K] | null {
-    if (activeLayers.length === 0) return null;
-    const first = activeLayers[0][field];
-    return activeLayers.every((l) => l[field] === first) ? first : null;
-  }
-
-  const sharedFill = sharedValue("fill");
-  const sharedStroke = sharedValue("stroke");
-  const sharedStrokeWidth = sharedValue("strokeWidth");
-  const sharedOpacity = sharedValue("opacity");
+  // Single-pass shared value computation across active layers
+  const { sharedFill, sharedStroke, sharedStrokeWidth, sharedOpacity } = useMemo(() => {
+    if (activeLayers.length === 0)
+      return { sharedFill: null, sharedStroke: null, sharedStrokeWidth: null, sharedOpacity: null };
+    const first = activeLayers[0];
+    let fill: string | null = first.fill;
+    let stroke: string | null = first.stroke;
+    let strokeWidth: string | null = first.strokeWidth;
+    let opacity: string | null = first.opacity;
+    for (let i = 1; i < activeLayers.length; i++) {
+      const l = activeLayers[i];
+      if (fill !== null && l.fill !== fill) fill = null;
+      if (stroke !== null && l.stroke !== stroke) stroke = null;
+      if (strokeWidth !== null && l.strokeWidth !== strokeWidth) strokeWidth = null;
+      if (opacity !== null && l.opacity !== opacity) opacity = null;
+    }
+    return { sharedFill: fill, sharedStroke: stroke, sharedStrokeWidth: strokeWidth, sharedOpacity: opacity };
+  }, [activeLayers]);
 
   const displayFill = sharedFill ?? displayLayer?.fill ?? "";
   const displayStroke = sharedStroke ?? displayLayer?.stroke ?? "";
@@ -123,13 +151,10 @@ export const PropertiesPanel = memo(function PropertiesPanel({
   const displayOpacity = sharedOpacity ?? displayLayer?.opacity ?? "1";
   const opacityPercent = Math.round(parseFloat(displayOpacity) * 100);
 
-  // Compute which layers are grouped
-  const groupedLayerIds = new Set(groups.flatMap((g) => g.layerIds));
-  const ungroupedLayers = layers.filter((l) => !groupedLayerIds.has(l.id));
-
   // Close context menu on outside click or escape
+  const contextMenuOpen = contextMenu !== null;
   useEffect(() => {
-    if (!contextMenu) return;
+    if (!contextMenuOpen) return;
     function handleClick() { setContextMenu(null); setMoveSubmenuOpen(false); }
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") { setContextMenu(null); setMoveSubmenuOpen(false); }
@@ -140,7 +165,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
       document.removeEventListener("mousedown", handleClick);
       document.removeEventListener("keydown", handleKey);
     };
-  }, [contextMenu]);
+  }, [contextMenuOpen]);
 
   // Safe triangle: when the submenu is open, track mouse globally and only
   // close when the cursor leaves the trigger, the submenu, AND the triangle
@@ -228,13 +253,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({
     if (!hasSelection) return;
     const num = parseFloat(value);
     if (isNaN(num)) return;
-    if (activeLayers.length === 1) {
-      onUpdateTransform(activeLayers[0].id, { ...activeLayers[0].transform, [field]: num });
-    } else {
-      onBatchUpdateTransform(
-        activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, [field]: num } }))
-      );
-    }
+    onBatchUpdateTransform(
+      activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, [field]: num } }))
+    );
   }
 
   // Select a group (and deselect any individual layer)
@@ -308,6 +329,16 @@ export const PropertiesPanel = memo(function PropertiesPanel({
 
   // --- Drag & Drop ---
   const dragGhostRef = useRef<HTMLDivElement | null>(null);
+
+  // Cleanup ghost on unmount (handles edge case: tab switch during drag)
+  useEffect(() => {
+    return () => {
+      if (dragGhostRef.current) {
+        dragGhostRef.current.remove();
+        dragGhostRef.current = null;
+      }
+    };
+  }, []);
 
   const handleDragStart = useCallback(
     (e: React.DragEvent, layerId: string) => {
@@ -397,19 +428,11 @@ export const PropertiesPanel = memo(function PropertiesPanel({
     [onMoveToGroup]
   );
 
-  // Find which group a layer belongs to
+  // Find which group a layer belongs to — O(1) via precomputed map
   const getLayerGroupId = useCallback(
-    (layerId: string) => {
-      for (const g of groups) {
-        if (g.layerIds.includes(layerId)) return g.id;
-      }
-      return null;
-    },
-    [groups]
+    (layerId: string) => layerToGroupMap.get(layerId) ?? null,
+    [layerToGroupMap]
   );
-
-  // Is a layer highlighted? Either individually selected or part of the selected group.
-  const activeLayerIds = new Set(activeLayers.map((l) => l.id));
 
   // --- Render a layer row ---
   function renderLayerRow(layer: SvgLayer, indent: boolean) {
@@ -444,7 +467,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
   // --- Render a folder row ---
   function renderGroupRow(group: LayerGroup) {
     const groupLayers = group.layerIds
-      .map((id) => layers.find((l) => l.id === id))
+      .map((id) => layerMap.get(id))
       .filter(Boolean) as SvgLayer[];
 
     return (
@@ -739,7 +762,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             {t.tool.fill}
           </span>
           {isGroupSelection && sharedFill === null && (
-            <span className="text-[10px] italic text-muted-foreground">mixed</span>
+            <span className="text-[10px] italic text-muted-foreground">{t.tool.mixed}</span>
           )}
         </div>
 
@@ -758,11 +781,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               ref={fillColorRef}
               type="color"
               value={toHex(displayFill || "#000000")}
-              onChange={(e) => {
-                const ids = activeLayers.map((l) => l.id);
-                if (ids.length === 1) onUpdateFill(ids[0], e.target.value);
-                else onBatchUpdateFill(ids, e.target.value);
-              }}
+              onChange={(e) => onBatchUpdateFill(activeIds, e.target.value)}
               disabled={!hasSelection}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               tabIndex={-1}
@@ -771,14 +790,10 @@ export const PropertiesPanel = memo(function PropertiesPanel({
           <input
             type="text"
             value={displayFill}
-            onChange={(e) => {
-              const ids = activeLayers.map((l) => l.id);
-              if (ids.length === 1) onUpdateFill(ids[0], e.target.value);
-              else onBatchUpdateFill(ids, e.target.value);
-            }}
+            onChange={(e) => onBatchUpdateFill(activeIds, e.target.value)}
             disabled={!hasSelection}
             placeholder="#000000"
-            className="h-8 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className={panelTextInputClass}
           />
         </div>
 
@@ -792,9 +807,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               value={opacityPercent}
               onChange={(e) => {
                 const val = (parseInt(e.target.value) / 100).toString();
-                const ids = activeLayers.map((l) => l.id);
-                if (ids.length === 1) onUpdateOpacity(ids[0], val);
-                else onBatchUpdateOpacity(ids, val);
+                onBatchUpdateOpacity(activeIds, val);
               }}
               disabled={!hasSelection}
               className="h-1 w-20 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
@@ -815,7 +828,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             {t.tool.stroke}
           </span>
           {isGroupSelection && sharedStroke === null && (
-            <span className="text-[10px] italic text-muted-foreground">mixed</span>
+            <span className="text-[10px] italic text-muted-foreground">{t.tool.mixed}</span>
           )}
         </div>
 
@@ -834,11 +847,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               ref={strokeColorRef}
               type="color"
               value={toHex(displayStroke || "#000000")}
-              onChange={(e) => {
-                const ids = activeLayers.map((l) => l.id);
-                if (ids.length === 1) onUpdateStroke(ids[0], e.target.value);
-                else onBatchUpdateStroke(ids, e.target.value);
-              }}
+              onChange={(e) => onBatchUpdateStroke(activeIds, e.target.value)}
               disabled={!hasSelection}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               tabIndex={-1}
@@ -847,14 +856,10 @@ export const PropertiesPanel = memo(function PropertiesPanel({
           <input
             type="text"
             value={displayStroke}
-            onChange={(e) => {
-              const ids = activeLayers.map((l) => l.id);
-              if (ids.length === 1) onUpdateStroke(ids[0], e.target.value);
-              else onBatchUpdateStroke(ids, e.target.value);
-            }}
+            onChange={(e) => onBatchUpdateStroke(activeIds, e.target.value)}
             disabled={!hasSelection}
             placeholder="none"
-            className="h-8 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className={panelTextInputClass}
           />
         </div>
 
@@ -863,13 +868,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({
           <input
             type="text"
             value={displayStrokeWidth}
-            onChange={(e) => {
-              const ids = activeLayers.map((l) => l.id);
-              if (ids.length === 1) onUpdateStrokeWidth(ids[0], e.target.value);
-              else onBatchUpdateStrokeWidth(ids, e.target.value);
-            }}
+            onChange={(e) => onBatchUpdateStrokeWidth(activeIds, e.target.value)}
             disabled={!hasSelection}
-            className="h-7 w-16 rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(panelSmInputClass, "w-16")}
           />
         </div>
       </div>
@@ -891,7 +892,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               value={displayLayer ? Math.round(displayLayer.transform.x) : 0}
               onChange={(e) => handleTransformField("x", e.target.value)}
               disabled={!hasSelection}
-              className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className={panelSmInputClass}
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -902,7 +903,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               value={displayLayer ? Math.round(displayLayer.transform.y) : 0}
               onChange={(e) => handleTransformField("y", e.target.value)}
               disabled={!hasSelection}
-              className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className={panelSmInputClass}
             />
           </div>
         </div>
@@ -923,7 +924,7 @@ export const PropertiesPanel = memo(function PropertiesPanel({
                 }
                 onChange={(e) => handleTransformField("rotation", e.target.value)}
                 disabled={!hasSelection}
-                className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className={panelSmInputClass}
               />
               <span className="text-[10px] text-muted-foreground">deg</span>
             </div>
@@ -946,16 +947,12 @@ export const PropertiesPanel = memo(function PropertiesPanel({
                   const pct = parseFloat(e.target.value);
                   if (isNaN(pct) || !hasSelection) return;
                   const s = pct / 100;
-                  if (activeLayers.length === 1) {
-                    onUpdateTransform(activeLayers[0].id, { ...activeLayers[0].transform, scaleX: s, scaleY: s });
-                  } else {
-                    onBatchUpdateTransform(
-                      activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, scaleX: s, scaleY: s } }))
-                    );
-                  }
+                  onBatchUpdateTransform(
+                    activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, scaleX: s, scaleY: s } }))
+                  );
                 }}
                 disabled={!hasSelection}
-                className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className={panelSmInputClass}
               />
               <span className="text-[10px] text-muted-foreground">%</span>
             </div>
