@@ -98,6 +98,14 @@ export interface Translations {
       zoomIn: string;
       zoomOut: string;
     };
+    newFolder: string;
+    renameFolder: string;
+    deleteFolder: string;
+    ungroupAll: string;
+    moveToFolder: string;
+    removeFromFolder: string;
+    newFolderWith: string;
+    folderName: string;
     shortcutLabels: Record<string, string>;
   };
   gallery: {
@@ -265,6 +273,14 @@ export const en: Translations = {
     transform: "Transform",
     rotation: "Rotation",
     scale: "Scale",
+    newFolder: "New folder",
+    renameFolder: "Rename folder",
+    deleteFolder: "Delete folder",
+    ungroupAll: "Ungroup all",
+    moveToFolder: "Move to folder",
+    removeFromFolder: "Remove from folder",
+    newFolderWith: "New folder with this layer",
+    folderName: "Folder",
     emptyCanvas: "SVG canvas",
     tools: {
       select: "Select",

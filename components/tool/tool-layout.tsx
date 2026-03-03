@@ -129,6 +129,17 @@ export function ToolLayout() {
             onUpdateStrokeWidth={editor.handleUpdateStrokeWidth}
             onUpdateOpacity={editor.handleUpdateOpacity}
             onUpdateTransform={editor.handleUpdateTransform}
+            onBatchUpdateFill={editor.handleBatchUpdateFill}
+            onBatchUpdateStroke={editor.handleBatchUpdateStroke}
+            onBatchUpdateStrokeWidth={editor.handleBatchUpdateStrokeWidth}
+            onBatchUpdateOpacity={editor.handleBatchUpdateOpacity}
+            onBatchUpdateTransform={editor.handleBatchUpdateTransform}
+            groups={editor.groups}
+            onCreateGroup={editor.handleCreateGroup}
+            onRenameGroup={editor.handleRenameGroup}
+            onDeleteGroup={editor.handleDeleteGroup}
+            onMoveToGroup={editor.handleMoveToGroup}
+            onToggleGroupCollapse={editor.handleToggleGroupCollapse}
           />
         </div>
 
@@ -155,6 +166,17 @@ export function ToolLayout() {
                 onUpdateStrokeWidth={editor.handleUpdateStrokeWidth}
                 onUpdateOpacity={editor.handleUpdateOpacity}
                 onUpdateTransform={editor.handleUpdateTransform}
+                onBatchUpdateFill={editor.handleBatchUpdateFill}
+                onBatchUpdateStroke={editor.handleBatchUpdateStroke}
+                onBatchUpdateStrokeWidth={editor.handleBatchUpdateStrokeWidth}
+                onBatchUpdateOpacity={editor.handleBatchUpdateOpacity}
+                onBatchUpdateTransform={editor.handleBatchUpdateTransform}
+                groups={editor.groups}
+                onCreateGroup={editor.handleCreateGroup}
+                onRenameGroup={editor.handleRenameGroup}
+                onDeleteGroup={editor.handleDeleteGroup}
+                onMoveToGroup={editor.handleMoveToGroup}
+                onToggleGroupCollapse={editor.handleToggleGroupCollapse}
               />
             </div>
           </div>

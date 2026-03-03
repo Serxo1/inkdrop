@@ -17,6 +17,13 @@ export interface SvgLayer {
   transform: SvgTransform;
 }
 
+export interface LayerGroup {
+  id: string;
+  name: string;
+  layerIds: string[];
+  collapsed: boolean;
+}
+
 const SHAPE_TAGS = ["path", "rect", "circle", "ellipse", "polygon", "line"];
 
 // ---------- Shared parse/serialize helpers ----------

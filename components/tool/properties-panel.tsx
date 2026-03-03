@@ -1,19 +1,45 @@
 "use client";
 
-import { memo, useRef } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { SvgLayer, SvgTransform } from "@/lib/svg-parser";
+import type { SvgLayer, SvgTransform, LayerGroup } from "@/lib/svg-parser";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  FolderIcon,
+  FolderOpenIcon,
+  PlusSignIcon,
+  ArrowRight01Icon,
+  ArrowDown01Icon,
+} from "@hugeicons/core-free-icons";
 
 interface PropertiesPanelProps {
   layers: SvgLayer[];
   selectedLayerId: string | null;
-  onSelectLayer: (id: string) => void;
+  onSelectLayer: (id: string | null) => void;
   onUpdateFill: (id: string, color: string) => void;
   onUpdateStroke: (id: string, color: string) => void;
   onUpdateStrokeWidth: (id: string, width: string) => void;
   onUpdateOpacity: (id: string, opacity: string) => void;
   onUpdateTransform: (id: string, transform: SvgTransform) => void;
+  onBatchUpdateFill: (ids: string[], color: string) => void;
+  onBatchUpdateStroke: (ids: string[], color: string) => void;
+  onBatchUpdateStrokeWidth: (ids: string[], width: string) => void;
+  onBatchUpdateOpacity: (ids: string[], opacity: string) => void;
+  onBatchUpdateTransform: (updates: Array<{ id: string; transform: SvgTransform }>) => void;
+  groups: LayerGroup[];
+  onCreateGroup: (name: string) => string;
+  onRenameGroup: (groupId: string, name: string) => void;
+  onDeleteGroup: (groupId: string) => void;
+  onMoveToGroup: (layerId: string, groupId: string | null) => void;
+  onToggleGroupCollapse: (groupId: string) => void;
+}
+
+interface ContextMenuState {
+  x: number;
+  y: number;
+  type: "layer" | "group";
+  targetId: string;
 }
 
 function toHex(color: string): string {
@@ -34,64 +60,673 @@ export const PropertiesPanel = memo(function PropertiesPanel({
   onUpdateStrokeWidth,
   onUpdateOpacity,
   onUpdateTransform,
+  onBatchUpdateFill,
+  onBatchUpdateStroke,
+  onBatchUpdateStrokeWidth,
+  onBatchUpdateOpacity,
+  onBatchUpdateTransform,
+  groups,
+  onCreateGroup,
+  onRenameGroup,
+  onDeleteGroup,
+  onMoveToGroup,
+  onToggleGroupCollapse,
 }: PropertiesPanelProps) {
   const { t } = useI18n();
   const fillColorRef = useRef<HTMLInputElement>(null);
   const strokeColorRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  const selectedLayer = layers.find((l) => l.id === selectedLayerId);
-  const opacityPercent = selectedLayer
-    ? Math.round(parseFloat(selectedLayer.opacity) * 100)
-    : 100;
+  const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
+  const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
+  const submenuTriggerRef = useRef<HTMLDivElement>(null);
+  const submenuContentRef = useRef<HTMLDivElement>(null);
+  const submenuCloseTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [renamingGroupId, setRenamingGroupId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [dragOverGroupId, setDragOverGroupId] = useState<string | null>(null);
+  const [dragOverUngrouped, setDragOverUngrouped] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  function handleTransformField(
-    field: keyof SvgTransform,
-    value: string
-  ) {
-    if (!selectedLayerId || !selectedLayer) return;
+  // The "active layers" are either the single selected layer or all layers in the selected group.
+  const selectedGroup = selectedGroupId
+    ? groups.find((g) => g.id === selectedGroupId) ?? null
+    : null;
+  const activeLayers: SvgLayer[] = selectedGroup
+    ? selectedGroup.layerIds
+        .map((id) => layers.find((l) => l.id === id))
+        .filter(Boolean) as SvgLayer[]
+    : selectedLayerId
+      ? layers.filter((l) => l.id === selectedLayerId)
+      : [];
+
+  // Representative layer for displaying values (first in selection)
+  const displayLayer = activeLayers[0] ?? null;
+  const hasSelection = activeLayers.length > 0;
+  const isGroupSelection = selectedGroup !== null && activeLayers.length > 1;
+
+  // Check if all layers share the same value for a field
+  function sharedValue<K extends keyof SvgLayer>(field: K): SvgLayer[K] | null {
+    if (activeLayers.length === 0) return null;
+    const first = activeLayers[0][field];
+    return activeLayers.every((l) => l[field] === first) ? first : null;
+  }
+
+  const sharedFill = sharedValue("fill");
+  const sharedStroke = sharedValue("stroke");
+  const sharedStrokeWidth = sharedValue("strokeWidth");
+  const sharedOpacity = sharedValue("opacity");
+
+  const displayFill = sharedFill ?? displayLayer?.fill ?? "";
+  const displayStroke = sharedStroke ?? displayLayer?.stroke ?? "";
+  const displayStrokeWidth = sharedStrokeWidth ?? displayLayer?.strokeWidth ?? "1";
+  const displayOpacity = sharedOpacity ?? displayLayer?.opacity ?? "1";
+  const opacityPercent = Math.round(parseFloat(displayOpacity) * 100);
+
+  // Compute which layers are grouped
+  const groupedLayerIds = new Set(groups.flatMap((g) => g.layerIds));
+  const ungroupedLayers = layers.filter((l) => !groupedLayerIds.has(l.id));
+
+  // Close context menu on outside click or escape
+  useEffect(() => {
+    if (!contextMenu) return;
+    function handleClick() { setContextMenu(null); setMoveSubmenuOpen(false); }
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { setContextMenu(null); setMoveSubmenuOpen(false); }
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [contextMenu]);
+
+  // Safe triangle: when the submenu is open, track mouse globally and only
+  // close when the cursor leaves the trigger, the submenu, AND the triangle
+  // connecting them (the "prediction cone").
+  useEffect(() => {
+    if (!moveSubmenuOpen) return;
+
+    function isInsideRect(
+      mx: number, my: number,
+      r: DOMRect, pad: number
+    ) {
+      return (
+        mx >= r.left - pad && mx <= r.right + pad &&
+        my >= r.top - pad && my <= r.bottom + pad
+      );
+    }
+
+    function pointInTriangle(
+      px: number, py: number,
+      ax: number, ay: number,
+      bx: number, by: number,
+      cx: number, cy: number
+    ) {
+      const d1 = (px - bx) * (ay - by) - (ax - bx) * (py - by);
+      const d2 = (px - cx) * (by - cy) - (bx - cx) * (py - cy);
+      const d3 = (px - ax) * (cy - ay) - (cx - ax) * (py - ay);
+      return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+    }
+
+    function onMove(e: MouseEvent) {
+      const trig = submenuTriggerRef.current?.getBoundingClientRect();
+      const sub = submenuContentRef.current?.getBoundingClientRect();
+      if (!trig || !sub) return;
+
+      const mx = e.clientX;
+      const my = e.clientY;
+      const PAD = 5;
+
+      // 1. Inside the trigger row
+      if (isInsideRect(mx, my, trig, PAD)) {
+        clearTimeout(submenuCloseTimerRef.current);
+        return;
+      }
+
+      // 2. Inside the submenu panel
+      if (isInsideRect(mx, my, sub, PAD)) {
+        clearTimeout(submenuCloseTimerRef.current);
+        return;
+      }
+
+      // 3. Inside the safe triangle connecting the trigger's near edge
+      //    to the submenu's near corners (works for both left/right)
+      const subIsLeft = sub.right <= trig.left;
+      const apexX = subIsLeft ? trig.left : trig.right;
+      const apexY = (trig.top + trig.bottom) / 2;
+      const nearX = subIsLeft ? sub.right : sub.left;
+
+      if (
+        pointInTriangle(
+          mx, my,
+          apexX, apexY,
+          nearX, sub.top - PAD,
+          nearX, sub.bottom + PAD
+        )
+      ) {
+        clearTimeout(submenuCloseTimerRef.current);
+        return;
+      }
+
+      // Outside all safe zones → close after a tiny debounce
+      clearTimeout(submenuCloseTimerRef.current);
+      submenuCloseTimerRef.current = setTimeout(() => {
+        setMoveSubmenuOpen(false);
+      }, 60);
+    }
+
+    document.addEventListener("mousemove", onMove);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      clearTimeout(submenuCloseTimerRef.current);
+    };
+  }, [moveSubmenuOpen]);
+
+  function handleTransformField(field: keyof SvgTransform, value: string) {
+    if (!hasSelection) return;
     const num = parseFloat(value);
     if (isNaN(num)) return;
-    onUpdateTransform(selectedLayerId, {
-      ...selectedLayer.transform,
-      [field]: num,
-    });
+    if (activeLayers.length === 1) {
+      onUpdateTransform(activeLayers[0].id, { ...activeLayers[0].transform, [field]: num });
+    } else {
+      onBatchUpdateTransform(
+        activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, [field]: num } }))
+      );
+    }
+  }
+
+  // Select a group (and deselect any individual layer)
+  const handleSelectGroup = useCallback(
+    (groupId: string) => {
+      setSelectedGroupId(groupId);
+      onSelectLayer(null);
+    },
+    [onSelectLayer]
+  );
+
+  // Select an individual layer (and deselect any group)
+  const handleSelectLayerLocal = useCallback(
+    (layerId: string) => {
+      setSelectedGroupId(null);
+      onSelectLayer(layerId);
+    },
+    [onSelectLayer]
+  );
+
+  const handleNewFolder = useCallback(() => {
+    const id = onCreateGroup(t.tool.folderName);
+    setRenamingGroupId(id);
+    setRenameValue(t.tool.folderName);
+  }, [onCreateGroup, t.tool.folderName]);
+
+  const handleLayerContextMenu = useCallback(
+    (e: React.MouseEvent, layerId: string) => {
+      e.preventDefault();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        type: "layer",
+        targetId: layerId,
+      });
+      setMoveSubmenuOpen(false);
+    },
+    []
+  );
+
+  const handleGroupContextMenu = useCallback(
+    (e: React.MouseEvent, groupId: string) => {
+      e.preventDefault();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        type: "group",
+        targetId: groupId,
+      });
+      setMoveSubmenuOpen(false);
+    },
+    []
+  );
+
+  const startRename = useCallback(
+    (groupId: string) => {
+      const group = groups.find((g) => g.id === groupId);
+      if (!group) return;
+      setRenamingGroupId(groupId);
+      setRenameValue(group.name);
+    },
+    [groups]
+  );
+
+  const commitRename = useCallback(() => {
+    if (renamingGroupId && renameValue.trim()) {
+      onRenameGroup(renamingGroupId, renameValue.trim());
+    }
+    setRenamingGroupId(null);
+  }, [renamingGroupId, renameValue, onRenameGroup]);
+
+  // --- Drag & Drop ---
+  const dragGhostRef = useRef<HTMLDivElement | null>(null);
+
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, layerId: string) => {
+      e.dataTransfer.setData("text/plain", layerId);
+      e.dataTransfer.effectAllowed = "move";
+
+      // Create a custom drag ghost from just this row
+      const el = e.currentTarget as HTMLElement;
+      const ghost = el.cloneNode(true) as HTMLDivElement;
+      ghost.style.position = "absolute";
+      ghost.style.top = "-9999px";
+      ghost.style.left = "-9999px";
+      ghost.style.width = `${el.offsetWidth}px`;
+      ghost.style.pointerEvents = "none";
+      document.body.appendChild(ghost);
+      dragGhostRef.current = ghost;
+
+      e.dataTransfer.setDragImage(ghost, e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    },
+    []
+  );
+
+  const handleDragEnd = useCallback(() => {
+    if (dragGhostRef.current) {
+      document.body.removeChild(dragGhostRef.current);
+      dragGhostRef.current = null;
+    }
+    setDragOverGroupId(null);
+    setDragOverUngrouped(false);
+  }, []);
+
+  const handleGroupDragOver = useCallback(
+    (e: React.DragEvent, groupId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "move";
+      setDragOverGroupId(groupId);
+      setDragOverUngrouped(false);
+    },
+    []
+  );
+
+  const handleGroupDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      // Only reset if we're actually leaving the folder row,
+      // not just moving between its child elements
+      const related = e.relatedTarget as Node | null;
+      if (related && e.currentTarget.contains(related)) return;
+      setDragOverGroupId(null);
+    },
+    []
+  );
+
+  const handleGroupDrop = useCallback(
+    (e: React.DragEvent, groupId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const layerId = e.dataTransfer.getData("text/plain");
+      if (layerId) onMoveToGroup(layerId, groupId);
+      setDragOverGroupId(null);
+    },
+    [onMoveToGroup]
+  );
+
+  const handleUngroupedDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverUngrouped(true);
+  }, []);
+
+  const handleUngroupedDragLeave = useCallback(
+    (e: React.DragEvent) => {
+      const related = e.relatedTarget as Node | null;
+      if (related && e.currentTarget.contains(related)) return;
+      setDragOverUngrouped(false);
+    },
+    []
+  );
+
+  const handleUngroupedDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      const layerId = e.dataTransfer.getData("text/plain");
+      if (layerId) onMoveToGroup(layerId, null);
+      setDragOverUngrouped(false);
+    },
+    [onMoveToGroup]
+  );
+
+  // Find which group a layer belongs to
+  const getLayerGroupId = useCallback(
+    (layerId: string) => {
+      for (const g of groups) {
+        if (g.layerIds.includes(layerId)) return g.id;
+      }
+      return null;
+    },
+    [groups]
+  );
+
+  // Is a layer highlighted? Either individually selected or part of the selected group.
+  const activeLayerIds = new Set(activeLayers.map((l) => l.id));
+
+  // --- Render a layer row ---
+  function renderLayerRow(layer: SvgLayer, indent: boolean) {
+    return (
+      <button
+        key={layer.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, layer.id)}
+        onDragEnd={handleDragEnd}
+        onClick={() => handleSelectLayerLocal(layer.id)}
+        onContextMenu={(e) => handleLayerContextMenu(e, layer.id)}
+        className={cn(
+          "flex h-8 items-center gap-2 rounded px-2 text-left transition-colors",
+          indent && "ml-5",
+          activeLayerIds.has(layer.id)
+            ? "bg-primary/10 font-medium text-foreground"
+            : "text-muted-foreground hover:bg-muted/50"
+        )}
+      >
+        <span
+          className="h-3 w-3 shrink-0 rounded-sm border border-border"
+          style={{
+            backgroundColor:
+              layer.fill === "none" ? "transparent" : layer.fill,
+          }}
+        />
+        <span className="truncate text-xs">{layer.name}</span>
+      </button>
+    );
+  }
+
+  // --- Render a folder row ---
+  function renderGroupRow(group: LayerGroup) {
+    const groupLayers = group.layerIds
+      .map((id) => layers.find((l) => l.id === id))
+      .filter(Boolean) as SvgLayer[];
+
+    return (
+      <div key={group.id}>
+        <div
+          className={cn(
+            "flex h-8 cursor-pointer items-center gap-1.5 rounded px-2 transition-colors hover:bg-muted/50",
+            selectedGroupId === group.id && "bg-primary/10",
+            dragOverGroupId === group.id &&
+              "ring-2 ring-primary/50 bg-primary/5"
+          )}
+          onClick={() => handleSelectGroup(group.id)}
+          onContextMenu={(e) => handleGroupContextMenu(e, group.id)}
+          onDragOver={(e) => handleGroupDragOver(e, group.id)}
+          onDragLeave={handleGroupDragLeave}
+          onDrop={(e) => handleGroupDrop(e, group.id)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleGroupCollapse(group.id); }}
+            className="flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground"
+          >
+            <HugeiconsIcon
+              icon={group.collapsed ? ArrowRight01Icon : ArrowDown01Icon}
+              strokeWidth={2}
+              className="size-3"
+            />
+          </button>
+          <HugeiconsIcon
+            icon={group.collapsed ? FolderIcon : FolderOpenIcon}
+            strokeWidth={2}
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
+          {renamingGroupId === group.id ? (
+            <input
+              autoFocus
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onBlur={commitRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitRename();
+                if (e.key === "Escape") setRenamingGroupId(null);
+              }}
+              className="h-6 flex-1 rounded border border-border bg-background px-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <span
+              className="flex-1 truncate text-xs font-medium text-foreground"
+              onDoubleClick={() => startRename(group.id)}
+            >
+              {group.name}
+            </span>
+          )}
+          <span className="text-[10px] text-muted-foreground">
+            {groupLayers.length}
+          </span>
+        </div>
+
+        {/* Nested layers */}
+        {!group.collapsed && (
+          <div className="flex flex-col gap-0.5">
+            {groupLayers.map((layer) => renderLayerRow(layer, true))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- Context menu rendering ---
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  function renderContextMenu() {
+    if (!contextMenu) return null;
+
+    // Clamp so the menu doesn't overflow the viewport
+    const MENU_W = 190;
+    const MENU_H_EST = 120;
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1000;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const x = Math.min(contextMenu.x, vw - MENU_W - 8);
+    const y = Math.min(contextMenu.y, vh - MENU_H_EST - 8);
+
+    // Check if submenu should flip left
+    const submenuFlipLeft = x + MENU_W + 168 > vw;
+
+    const menuStyle: React.CSSProperties = {
+      position: "fixed",
+      left: x,
+      top: y,
+      zIndex: 9999,
+    };
+
+    const itemClass =
+      "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground";
+
+    if (contextMenu.type === "layer") {
+      const layerGroupId = getLayerGroupId(contextMenu.targetId);
+
+      return (
+        <div
+          ref={contextMenuRef}
+          style={menuStyle}
+          className="min-w-[180px] rounded-md border border-border bg-popover p-1 shadow-md"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {/* Move to folder submenu */}
+          <div
+            className="relative"
+            onMouseEnter={() => {
+              clearTimeout(submenuCloseTimerRef.current);
+              setMoveSubmenuOpen(true);
+            }}
+          >
+            <div ref={submenuTriggerRef} className={cn(itemClass, "cursor-default")}>
+              <HugeiconsIcon icon={FolderIcon} strokeWidth={2} className="size-4" />
+              <span className="flex-1">{t.tool.moveToFolder}</span>
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                strokeWidth={2}
+                className={cn("size-3.5", submenuFlipLeft && "rotate-180")}
+              />
+            </div>
+
+            {moveSubmenuOpen && (
+              <div
+                ref={submenuContentRef}
+                className="absolute top-0 min-w-[160px] rounded-md border border-border bg-popover p-1 shadow-md"
+                style={submenuFlipLeft ? { right: "100%", marginRight: 4 } : { left: "100%", marginLeft: 4 }}
+              >
+                {groups.map((g) => (
+                  <button
+                    key={g.id}
+                    className={itemClass}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      onMoveToGroup(contextMenu.targetId, g.id);
+                      setContextMenu(null);
+                    }}
+                  >
+                    <HugeiconsIcon icon={FolderIcon} strokeWidth={2} className="size-3.5" />
+                    <span className="truncate">{g.name}</span>
+                  </button>
+                ))}
+                {groups.length > 0 && (
+                  <div className="-mx-1 my-1 h-px bg-border" />
+                )}
+                <button
+                  className={itemClass}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    const id = onCreateGroup(t.tool.folderName);
+                    onMoveToGroup(contextMenu.targetId, id);
+                    setContextMenu(null);
+                  }}
+                >
+                  <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} className="size-3.5" />
+                  <span>{t.tool.newFolder}</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Remove from folder (only if in a group) */}
+          {layerGroupId && (
+            <button
+              className={itemClass}
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                onMoveToGroup(contextMenu.targetId, null);
+                setContextMenu(null);
+              }}
+            >
+              <span className="size-4" />
+              <span>{t.tool.removeFromFolder}</span>
+            </button>
+          )}
+
+          <div className="-mx-1 my-1 h-px bg-border" />
+
+          {/* New folder with this layer */}
+          <button
+            className={itemClass}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              const id = onCreateGroup(t.tool.folderName);
+              onMoveToGroup(contextMenu.targetId, id);
+              setContextMenu(null);
+            }}
+          >
+            <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} className="size-4" />
+            <span>{t.tool.newFolderWith}</span>
+          </button>
+        </div>
+      );
+    }
+
+    // Group context menu
+    return (
+      <div
+        ref={contextMenuRef}
+        style={menuStyle}
+        className="min-w-[160px] rounded-md border border-border bg-popover p-1 shadow-md"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <button
+          className={itemClass}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            startRename(contextMenu.targetId);
+            setContextMenu(null);
+          }}
+        >
+          {t.tool.renameFolder}
+        </button>
+        <button
+          className={itemClass}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            const group = groups.find((g) => g.id === contextMenu.targetId);
+            if (group) {
+              group.layerIds.forEach((lid) => onMoveToGroup(lid, null));
+            }
+            onDeleteGroup(contextMenu.targetId);
+            setContextMenu(null);
+          }}
+        >
+          {t.tool.ungroupAll}
+        </button>
+        <div className="-mx-1 my-1 h-px bg-border" />
+        <button
+          className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onDeleteGroup(contextMenu.targetId);
+            setContextMenu(null);
+          }}
+        >
+          {t.tool.deleteFolder}
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="flex w-[280px] flex-col overflow-y-auto border-l border-border bg-background">
+    <div
+      ref={panelRef}
+      className="relative flex w-[280px] flex-col overflow-y-auto border-l border-border bg-background"
+    >
       {/* Layers Section */}
       <div className="flex flex-col gap-3 p-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
             {t.tool.layers}
           </span>
-          <span className="text-[11px] text-muted-foreground">
-            {layers.length} {t.tool.pathCount}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              {layers.length} {t.tool.pathCount}
+            </span>
+            <button
+              onClick={handleNewFolder}
+              title={t.tool.newFolder}
+              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} className="size-3.5" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex max-h-[200px] flex-col gap-0.5 overflow-y-auto">
-          {layers.map((layer) => (
-            <button
-              key={layer.id}
-              onClick={() => onSelectLayer(layer.id)}
-              className={cn(
-                "flex h-8 items-center gap-2 rounded px-2 text-left transition-colors",
-                selectedLayerId === layer.id
-                  ? "bg-primary/10 font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-muted/50"
-              )}
-            >
-              <span
-                className="h-3 w-3 shrink-0 rounded-sm border border-border"
-                style={{
-                  backgroundColor:
-                    layer.fill === "none" ? "transparent" : layer.fill,
-                }}
-              />
-              <span className="truncate text-xs">{layer.name}</span>
-            </button>
-          ))}
+        <div
+          className={cn(
+            "flex max-h-[280px] flex-col gap-0.5 overflow-y-auto",
+            dragOverUngrouped && "ring-2 ring-primary/20 rounded"
+          )}
+          onDragOver={handleUngroupedDragOver}
+          onDragLeave={handleUngroupedDragLeave}
+          onDrop={handleUngroupedDrop}
+        >
+          {/* Render groups first */}
+          {groups.map((group) => renderGroupRow(group))}
+
+          {/* Render ungrouped layers */}
+          {ungroupedLayers.map((layer) => renderLayerRow(layer, false))}
         </div>
       </div>
 
@@ -99,9 +734,14 @@ export const PropertiesPanel = memo(function PropertiesPanel({
 
       {/* Fill Section */}
       <div className="flex flex-col gap-3 p-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
-          {t.tool.fill}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            {t.tool.fill}
+          </span>
+          {isGroupSelection && sharedFill === null && (
+            <span className="text-[10px] italic text-muted-foreground">mixed</span>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           <button
@@ -109,30 +749,34 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             className="relative h-8 w-8 shrink-0 rounded-md border border-border"
             style={{
               backgroundColor:
-                selectedLayer && selectedLayer.fill !== "none"
-                  ? selectedLayer.fill
+                displayFill && displayFill !== "none"
+                  ? displayFill
                   : "transparent",
             }}
           >
             <input
               ref={fillColorRef}
               type="color"
-              value={toHex(selectedLayer?.fill || "#000000")}
+              value={toHex(displayFill || "#000000")}
               onChange={(e) => {
-                if (selectedLayerId) onUpdateFill(selectedLayerId, e.target.value);
+                const ids = activeLayers.map((l) => l.id);
+                if (ids.length === 1) onUpdateFill(ids[0], e.target.value);
+                else onBatchUpdateFill(ids, e.target.value);
               }}
-              disabled={!selectedLayer}
+              disabled={!hasSelection}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               tabIndex={-1}
             />
           </button>
           <input
             type="text"
-            value={selectedLayer?.fill || ""}
+            value={displayFill}
             onChange={(e) => {
-              if (selectedLayerId) onUpdateFill(selectedLayerId, e.target.value);
+              const ids = activeLayers.map((l) => l.id);
+              if (ids.length === 1) onUpdateFill(ids[0], e.target.value);
+              else onBatchUpdateFill(ids, e.target.value);
             }}
-            disabled={!selectedLayer}
+            disabled={!hasSelection}
             placeholder="#000000"
             className="h-8 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
@@ -147,14 +791,12 @@ export const PropertiesPanel = memo(function PropertiesPanel({
               max="100"
               value={opacityPercent}
               onChange={(e) => {
-                if (selectedLayerId) {
-                  onUpdateOpacity(
-                    selectedLayerId,
-                    (parseInt(e.target.value) / 100).toString()
-                  );
-                }
+                const val = (parseInt(e.target.value) / 100).toString();
+                const ids = activeLayers.map((l) => l.id);
+                if (ids.length === 1) onUpdateOpacity(ids[0], val);
+                else onBatchUpdateOpacity(ids, val);
               }}
-              disabled={!selectedLayer}
+              disabled={!hasSelection}
               className="h-1 w-20 accent-primary disabled:cursor-not-allowed disabled:opacity-50"
             />
             <span className="w-8 text-right text-xs text-muted-foreground">
@@ -168,9 +810,14 @@ export const PropertiesPanel = memo(function PropertiesPanel({
 
       {/* Stroke Section */}
       <div className="flex flex-col gap-3 p-4">
-        <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
-          {t.tool.stroke}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            {t.tool.stroke}
+          </span>
+          {isGroupSelection && sharedStroke === null && (
+            <span className="text-[10px] italic text-muted-foreground">mixed</span>
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           <button
@@ -178,30 +825,34 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             className="relative h-8 w-8 shrink-0 rounded-md border border-border"
             style={{
               backgroundColor:
-                selectedLayer && selectedLayer.stroke !== "none"
-                  ? selectedLayer.stroke
+                displayStroke && displayStroke !== "none"
+                  ? displayStroke
                   : "transparent",
             }}
           >
             <input
               ref={strokeColorRef}
               type="color"
-              value={toHex(selectedLayer?.stroke || "#000000")}
+              value={toHex(displayStroke || "#000000")}
               onChange={(e) => {
-                if (selectedLayerId) onUpdateStroke(selectedLayerId, e.target.value);
+                const ids = activeLayers.map((l) => l.id);
+                if (ids.length === 1) onUpdateStroke(ids[0], e.target.value);
+                else onBatchUpdateStroke(ids, e.target.value);
               }}
-              disabled={!selectedLayer}
+              disabled={!hasSelection}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               tabIndex={-1}
             />
           </button>
           <input
             type="text"
-            value={selectedLayer?.stroke || ""}
+            value={displayStroke}
             onChange={(e) => {
-              if (selectedLayerId) onUpdateStroke(selectedLayerId, e.target.value);
+              const ids = activeLayers.map((l) => l.id);
+              if (ids.length === 1) onUpdateStroke(ids[0], e.target.value);
+              else onBatchUpdateStroke(ids, e.target.value);
             }}
-            disabled={!selectedLayer}
+            disabled={!hasSelection}
             placeholder="none"
             className="h-8 flex-1 rounded-md border border-border bg-background px-2.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
@@ -211,11 +862,13 @@ export const PropertiesPanel = memo(function PropertiesPanel({
           <span className="text-xs text-muted-foreground">{t.tool.width}</span>
           <input
             type="text"
-            value={selectedLayer?.strokeWidth || "1"}
+            value={displayStrokeWidth}
             onChange={(e) => {
-              if (selectedLayerId) onUpdateStrokeWidth(selectedLayerId, e.target.value);
+              const ids = activeLayers.map((l) => l.id);
+              if (ids.length === 1) onUpdateStrokeWidth(ids[0], e.target.value);
+              else onBatchUpdateStrokeWidth(ids, e.target.value);
             }}
-            disabled={!selectedLayer}
+            disabled={!hasSelection}
             className="h-7 w-16 rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
@@ -235,9 +888,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             <input
               type="number"
               step="1"
-              value={selectedLayer ? Math.round(selectedLayer.transform.x) : 0}
+              value={displayLayer ? Math.round(displayLayer.transform.x) : 0}
               onChange={(e) => handleTransformField("x", e.target.value)}
-              disabled={!selectedLayer}
+              disabled={!hasSelection}
               className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -246,9 +899,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({
             <input
               type="number"
               step="1"
-              value={selectedLayer ? Math.round(selectedLayer.transform.y) : 0}
+              value={displayLayer ? Math.round(displayLayer.transform.y) : 0}
               onChange={(e) => handleTransformField("y", e.target.value)}
-              disabled={!selectedLayer}
+              disabled={!hasSelection}
               className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
@@ -264,12 +917,12 @@ export const PropertiesPanel = memo(function PropertiesPanel({
                 type="number"
                 step="1"
                 value={
-                  selectedLayer
-                    ? Math.round(selectedLayer.transform.rotation)
+                  displayLayer
+                    ? Math.round(displayLayer.transform.rotation)
                     : 0
                 }
                 onChange={(e) => handleTransformField("rotation", e.target.value)}
-                disabled={!selectedLayer}
+                disabled={!hasSelection}
                 className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
               <span className="text-[10px] text-muted-foreground">deg</span>
@@ -285,21 +938,23 @@ export const PropertiesPanel = memo(function PropertiesPanel({
                 step="0.1"
                 min="0.1"
                 value={
-                  selectedLayer
-                    ? Math.round(selectedLayer.transform.scaleX * 100)
+                  displayLayer
+                    ? Math.round(displayLayer.transform.scaleX * 100)
                     : 100
                 }
                 onChange={(e) => {
                   const pct = parseFloat(e.target.value);
-                  if (isNaN(pct) || !selectedLayerId || !selectedLayer) return;
+                  if (isNaN(pct) || !hasSelection) return;
                   const s = pct / 100;
-                  onUpdateTransform(selectedLayerId, {
-                    ...selectedLayer.transform,
-                    scaleX: s,
-                    scaleY: s,
-                  });
+                  if (activeLayers.length === 1) {
+                    onUpdateTransform(activeLayers[0].id, { ...activeLayers[0].transform, scaleX: s, scaleY: s });
+                  } else {
+                    onBatchUpdateTransform(
+                      activeLayers.map((l) => ({ id: l.id, transform: { ...l.transform, scaleX: s, scaleY: s } }))
+                    );
+                  }
                 }}
-                disabled={!selectedLayer}
+                disabled={!hasSelection}
                 className="h-7 w-full rounded border border-border bg-background px-2 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
               />
               <span className="text-[10px] text-muted-foreground">%</span>
@@ -307,6 +962,9 @@ export const PropertiesPanel = memo(function PropertiesPanel({
           </div>
         </div>
       </div>
+
+      {/* Context Menu Overlay */}
+      {renderContextMenu()}
     </div>
   );
 });
