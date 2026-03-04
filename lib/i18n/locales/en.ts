@@ -136,6 +136,53 @@ export interface Translations {
     title: string;
     items: [UseCase, UseCase, UseCase, UseCase, UseCase, UseCase];
   };
+  legal: {
+    privacy: {
+      title: string;
+      lastUpdated: string;
+      intro: string;
+      sections: {
+        title: string;
+        content: string;
+      }[];
+    };
+    terms: {
+      title: string;
+      lastUpdated: string;
+      intro: string;
+      sections: {
+        title: string;
+        content: string;
+      }[];
+    };
+    about: {
+      title: string;
+      subtitle: string;
+      mission: { title: string; content: string };
+      howItWorks: { title: string; content: string };
+      openSource: { title: string; content: string };
+      team: { title: string; content: string };
+    };
+    contact: {
+      title: string;
+      subtitle: string;
+      email: { title: string; description: string };
+      github: { title: string; description: string };
+      response: string;
+    };
+    cookieConsent: {
+      message: string;
+      accept: string;
+      decline: string;
+      learnMore: string;
+    };
+  };
+  footerLinks: {
+    privacy: string;
+    terms: string;
+    about: string;
+    contact: string;
+  };
 }
 
 export const en: Translations = {
@@ -417,5 +464,138 @@ export const en: Translations = {
         description: "Adjust SVG colors to match CMYK requirements or specific Pantone values before export.",
       },
     ],
+  },
+  legal: {
+    privacy: {
+      title: "Privacy Policy",
+      lastUpdated: "Last updated: March 4, 2025",
+      intro: "Inkdrop (\"we\", \"us\", or \"our\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.",
+      sections: [
+        {
+          title: "Information We Collect",
+          content: "Inkdrop is a client-side application. Your SVG files are processed entirely in your browser and are never uploaded to our servers. We do not collect, store, or have access to any files you edit.\n\nWe may collect anonymous usage data through Google Analytics, including pages visited, time spent on pages, browser type, device type, and approximate geographic location. This data is used solely to improve our service."
+        },
+        {
+          title: "Google AdSense",
+          content: "We use Google AdSense to display advertisements. Google AdSense may use cookies and web beacons to serve ads based on your prior visits to our website or other websites. Google's use of advertising cookies enables it and its partners to serve ads based on your visit to our site and/or other sites on the Internet.\n\nYou may opt out of personalized advertising by visiting Google's Ads Settings (https://www.google.com/settings/ads)."
+        },
+        {
+          title: "Cookies",
+          content: "We use cookies for the following purposes:\n\n• Essential cookies: To remember your language preference and theme setting.\n• Analytics cookies: Google Analytics uses cookies to collect anonymous usage data.\n• Advertising cookies: Google AdSense uses cookies to serve relevant ads.\n\nYou can control cookies through your browser settings. Disabling cookies may affect some features of the website."
+        },
+        {
+          title: "Local Storage",
+          content: "We use your browser's local storage to save your projects and preferences. This data remains on your device and is never transmitted to our servers. You can clear this data at any time through your browser settings."
+        },
+        {
+          title: "Third-Party Services",
+          content: "We use the following third-party services:\n\n• Google Analytics: For anonymous website usage analytics.\n• Google AdSense: For displaying advertisements.\n\nThese services may collect information as described in their respective privacy policies."
+        },
+        {
+          title: "Data Security",
+          content: "Since Inkdrop processes all files locally in your browser, your data remains under your control. We do not have access to your files or projects. We implement reasonable security measures to protect the limited data we do collect through analytics."
+        },
+        {
+          title: "Children's Privacy",
+          content: "Our service is not directed to children under 13. We do not knowingly collect personal information from children under 13."
+        },
+        {
+          title: "Changes to This Policy",
+          content: "We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the \"Last updated\" date."
+        },
+        {
+          title: "Contact Us",
+          content: "If you have any questions about this Privacy Policy, please contact us at suporte@polyaxis.com.br."
+        }
+      ]
+    },
+    terms: {
+      title: "Terms of Service",
+      lastUpdated: "Last updated: March 4, 2025",
+      intro: "By accessing and using Inkdrop, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, please do not use our service.",
+      sections: [
+        {
+          title: "Service Description",
+          content: "Inkdrop is a free, open-source, browser-based SVG editor. The tool allows you to recolor paths, edit curves, manage layers, and export SVG files. All processing occurs locally in your browser."
+        },
+        {
+          title: "Use License",
+          content: "Inkdrop is released under the MIT License. You are free to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the conditions of the MIT License."
+        },
+        {
+          title: "User Responsibilities",
+          content: "You are responsible for:\n\n• Any content you upload, edit, or create using Inkdrop.\n• Ensuring you have the rights to edit any SVG files you use.\n• Using the service in compliance with applicable laws.\n• Maintaining backups of your work."
+        },
+        {
+          title: "Intellectual Property",
+          content: "You retain all rights to the SVG files you edit with Inkdrop. We do not claim any ownership over your content. The Inkdrop brand, logo, and website design are property of Polyaxis."
+        },
+        {
+          title: "Disclaimer of Warranties",
+          content: "Inkdrop is provided \"as is\" without warranty of any kind, express or implied. We do not guarantee that the service will be uninterrupted, error-free, or free of harmful components."
+        },
+        {
+          title: "Limitation of Liability",
+          content: "In no event shall Inkdrop, Polyaxis, or its contributors be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the service."
+        },
+        {
+          title: "Advertisements",
+          content: "Inkdrop displays advertisements through Google AdSense. By using our service, you acknowledge that ads may be displayed during your use of the tool."
+        },
+        {
+          title: "Changes to Terms",
+          content: "We reserve the right to modify these Terms of Service at any time. Changes will be effective immediately upon posting to this page. Continued use of the service after changes constitutes acceptance of the new terms."
+        },
+        {
+          title: "Contact",
+          content: "For questions about these Terms of Service, contact us at suporte@polyaxis.com.br."
+        }
+      ]
+    },
+    about: {
+      title: "About Inkdrop",
+      subtitle: "A free SVG editor that respects your privacy.",
+      mission: {
+        title: "Our Mission",
+        content: "We believe editing SVGs shouldn't require expensive software, accounts, or uploading your files to someone else's server. Inkdrop was built to be the fastest, simplest way to recolor and edit SVGs — entirely in your browser."
+      },
+      howItWorks: {
+        title: "How It Works",
+        content: "Inkdrop runs 100% in your browser. Your files are never uploaded to any server. When you save a project, it's stored in your browser's local storage. When you export, the file is generated on your machine. No backend, no database, no tracking of your files."
+      },
+      openSource: {
+        title: "Open Source",
+        content: "Inkdrop is open source under the MIT License. You can inspect the code, contribute, or fork it for your own projects. We believe in transparency and community-driven development."
+      },
+      team: {
+        title: "Built by Polyaxis",
+        content: "Inkdrop is developed and maintained by Polyaxis, a software studio based in Brazil. We build tools that are useful, beautiful, and respectful of user privacy."
+      }
+    },
+    contact: {
+      title: "Contact Us",
+      subtitle: "Have a question, suggestion, or found a bug? We'd love to hear from you.",
+      email: {
+        title: "Email",
+        description: "For general inquiries and support, reach out to us directly."
+      },
+      github: {
+        title: "GitHub",
+        description: "Found a bug or want to request a feature? Open an issue on our GitHub repository."
+      },
+      response: "We typically respond within 48 hours."
+    },
+    cookieConsent: {
+      message: "We use cookies for analytics and to show relevant ads. Your SVG files are never uploaded or tracked.",
+      accept: "Accept",
+      decline: "Decline",
+      learnMore: "Learn more"
+    }
+  },
+  footerLinks: {
+    privacy: "Privacy",
+    terms: "Terms",
+    about: "About",
+    contact: "Contact",
   },
 };

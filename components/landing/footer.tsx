@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { InkdropLogo } from "@/components/inkdrop-logo";
 
@@ -18,7 +19,7 @@ export function Footer() {
 
           <div className="flex flex-wrap items-center gap-6">
             <a
-              href="https://github.com"
+              href="https://github.com/Serxo1/inkdrop"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
@@ -41,6 +42,34 @@ export function Footer() {
         </div>
 
         <div className="h-px bg-border" />
+
+        {/* Legal links */}
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <Link
+            href="/privacy"
+            className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t.footerLinks.privacy}
+          </Link>
+          <Link
+            href="/terms"
+            className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t.footerLinks.terms}
+          </Link>
+          <Link
+            href="/about"
+            className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t.footerLinks.about}
+          </Link>
+          <Link
+            href="/contact"
+            className="text-[13px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t.footerLinks.contact}
+          </Link>
+        </div>
 
         {/* Bottom row */}
         <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">

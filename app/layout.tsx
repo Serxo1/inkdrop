@@ -6,6 +6,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleAnalytics } from "@/components/google-analytics";
+import { CookieConsent } from "@/components/cookie-consent";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -70,7 +71,10 @@ export default function RootLayout({
         <GoogleAnalytics />
         <ThemeProvider>
           <TooltipProvider>
-            <I18nProvider>{children}</I18nProvider>
+            <I18nProvider>
+              {children}
+              <CookieConsent />
+            </I18nProvider>
           </TooltipProvider>
         </ThemeProvider>
       </body>

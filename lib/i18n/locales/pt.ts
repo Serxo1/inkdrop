@@ -280,4 +280,137 @@ export const pt: Translations = {
       },
     ],
   },
+  legal: {
+    privacy: {
+      title: "Política de Privacidade",
+      lastUpdated: "Última atualização: 4 de março de 2025",
+      intro: "O Inkdrop (\"nós\") está comprometido em proteger sua privacidade. Esta Política de Privacidade explica como coletamos, usamos e protegemos suas informações quando você visita nosso site.",
+      sections: [
+        {
+          title: "Informações que Coletamos",
+          content: "O Inkdrop é uma aplicação que roda no lado do cliente. Seus arquivos SVG são processados inteiramente no seu navegador e nunca são enviados para nossos servidores. Nós não coletamos, armazenamos ou temos acesso a nenhum arquivo que você edita.\n\nPodemos coletar dados anônimos de uso através do Google Analytics, incluindo páginas visitadas, tempo gasto em páginas, tipo de navegador, tipo de dispositivo e localização geográfica aproximada. Esses dados são usados exclusivamente para melhorar nosso serviço."
+        },
+        {
+          title: "Google AdSense",
+          content: "Utilizamos o Google AdSense para exibir anúncios. O Google AdSense pode usar cookies e web beacons para veicular anúncios com base em suas visitas anteriores ao nosso site ou a outros sites. O uso de cookies de publicidade pelo Google permite que ele e seus parceiros veiculem anúncios com base em sua visita ao nosso site e/ou outros sites na Internet.\n\nVocê pode desativar a publicidade personalizada visitando as Configurações de Anúncios do Google (https://www.google.com/settings/ads)."
+        },
+        {
+          title: "Cookies",
+          content: "Utilizamos cookies para os seguintes fins:\n\n• Cookies essenciais: Para lembrar sua preferência de idioma e tema.\n• Cookies de análise: O Google Analytics usa cookies para coletar dados anônimos de uso.\n• Cookies de publicidade: O Google AdSense usa cookies para veicular anúncios relevantes.\n\nVocê pode controlar os cookies através das configurações do seu navegador. Desabilitar cookies pode afetar algumas funcionalidades do site."
+        },
+        {
+          title: "Armazenamento Local",
+          content: "Utilizamos o armazenamento local do seu navegador para salvar seus projetos e preferências. Esses dados permanecem no seu dispositivo e nunca são transmitidos para nossos servidores. Você pode limpar esses dados a qualquer momento nas configurações do seu navegador."
+        },
+        {
+          title: "Serviços de Terceiros",
+          content: "Utilizamos os seguintes serviços de terceiros:\n\n• Google Analytics: Para análise anônima de uso do site.\n• Google AdSense: Para exibição de anúncios.\n\nEstes serviços podem coletar informações conforme descrito em suas respectivas políticas de privacidade."
+        },
+        {
+          title: "Segurança dos Dados",
+          content: "Como o Inkdrop processa todos os arquivos localmente no seu navegador, seus dados permanecem sob seu controle. Não temos acesso aos seus arquivos ou projetos. Implementamos medidas de segurança razoáveis para proteger os dados limitados que coletamos através de análise."
+        },
+        {
+          title: "Privacidade de Crianças",
+          content: "Nosso serviço não é direcionado a menores de 13 anos. Não coletamos intencionalmente informações pessoais de menores de 13 anos."
+        },
+        {
+          title: "Alterações nesta Política",
+          content: "Podemos atualizar esta Política de Privacidade periodicamente. Notificaremos sobre quaisquer alterações publicando a nova Política de Privacidade nesta página e atualizando a data de \"Última atualização\"."
+        },
+        {
+          title: "Fale Conosco",
+          content: "Se você tiver dúvidas sobre esta Política de Privacidade, entre em contato conosco em suporte@polyaxis.com.br."
+        }
+      ]
+    },
+    terms: {
+      title: "Termos de Uso",
+      lastUpdated: "Última atualização: 4 de março de 2025",
+      intro: "Ao acessar e usar o Inkdrop, você concorda em estar vinculado a estes Termos de Uso. Se você não concordar com qualquer parte destes termos, por favor não use nosso serviço.",
+      sections: [
+        {
+          title: "Descrição do Serviço",
+          content: "O Inkdrop é um editor de SVG gratuito, open source e baseado em navegador. A ferramenta permite recolorir paths, editar curvas, gerenciar camadas e exportar arquivos SVG. Todo o processamento ocorre localmente no seu navegador."
+        },
+        {
+          title: "Licença de Uso",
+          content: "O Inkdrop é distribuído sob a Licença MIT. Você é livre para usar, copiar, modificar, mesclar, publicar, distribuir, sublicenciar e/ou vender cópias do software, sujeito às condições da Licença MIT."
+        },
+        {
+          title: "Responsabilidades do Usuário",
+          content: "Você é responsável por:\n\n• Qualquer conteúdo que envie, edite ou crie usando o Inkdrop.\n• Garantir que possui os direitos para editar qualquer arquivo SVG que utilize.\n• Usar o serviço em conformidade com as leis aplicáveis.\n• Manter backups do seu trabalho."
+        },
+        {
+          title: "Propriedade Intelectual",
+          content: "Você mantém todos os direitos sobre os arquivos SVG que editar com o Inkdrop. Não reivindicamos nenhuma propriedade sobre seu conteúdo. A marca Inkdrop, logotipo e design do site são propriedade da Polyaxis."
+        },
+        {
+          title: "Isenção de Garantias",
+          content: "O Inkdrop é fornecido \"como está\", sem garantia de qualquer tipo, expressa ou implícita. Não garantimos que o serviço será ininterrupto, livre de erros ou livre de componentes prejudiciais."
+        },
+        {
+          title: "Limitação de Responsabilidade",
+          content: "Em nenhum caso o Inkdrop, a Polyaxis ou seus contribuidores serão responsáveis por quaisquer danos indiretos, incidentais, especiais, consequenciais ou punitivos decorrentes ou relacionados ao seu uso do serviço."
+        },
+        {
+          title: "Anúncios",
+          content: "O Inkdrop exibe anúncios através do Google AdSense. Ao usar nosso serviço, você reconhece que anúncios podem ser exibidos durante o uso da ferramenta."
+        },
+        {
+          title: "Alterações nos Termos",
+          content: "Reservamo-nos o direito de modificar estes Termos de Uso a qualquer momento. As alterações serão efetivas imediatamente após a publicação nesta página. O uso continuado do serviço após as alterações constitui aceitação dos novos termos."
+        },
+        {
+          title: "Contato",
+          content: "Para dúvidas sobre estes Termos de Uso, entre em contato em suporte@polyaxis.com.br."
+        }
+      ]
+    },
+    about: {
+      title: "Sobre o Inkdrop",
+      subtitle: "Um editor de SVG gratuito que respeita sua privacidade.",
+      mission: {
+        title: "Nossa Missão",
+        content: "Acreditamos que editar SVGs não deveria exigir software caro, contas ou enviar seus arquivos para o servidor de outra pessoa. O Inkdrop foi construído para ser a maneira mais rápida e simples de recolorir e editar SVGs — inteiramente no seu navegador."
+      },
+      howItWorks: {
+        title: "Como Funciona",
+        content: "O Inkdrop roda 100% no seu navegador. Seus arquivos nunca são enviados para nenhum servidor. Quando você salva um projeto, ele é armazenado no armazenamento local do seu navegador. Quando você exporta, o arquivo é gerado na sua máquina. Sem backend, sem banco de dados, sem rastreamento dos seus arquivos."
+      },
+      openSource: {
+        title: "Open Source",
+        content: "O Inkdrop é open source sob a Licença MIT. Você pode inspecionar o código, contribuir ou fazer um fork para seus próprios projetos. Acreditamos em transparência e desenvolvimento orientado pela comunidade."
+      },
+      team: {
+        title: "Feito pela Polyaxis",
+        content: "O Inkdrop é desenvolvido e mantido pela Polyaxis, um estúdio de software baseado no Brasil. Construímos ferramentas que são úteis, bonitas e respeitam a privacidade do usuário."
+      }
+    },
+    contact: {
+      title: "Fale Conosco",
+      subtitle: "Tem uma dúvida, sugestão ou encontrou um bug? Adoraríamos ouvir você.",
+      email: {
+        title: "E-mail",
+        description: "Para dúvidas gerais e suporte, entre em contato diretamente."
+      },
+      github: {
+        title: "GitHub",
+        description: "Encontrou um bug ou quer solicitar uma funcionalidade? Abra uma issue no nosso repositório GitHub."
+      },
+      response: "Normalmente respondemos em até 48 horas."
+    },
+    cookieConsent: {
+      message: "Usamos cookies para análise e exibir anúncios relevantes. Seus arquivos SVG nunca são enviados ou rastreados.",
+      accept: "Aceitar",
+      decline: "Recusar",
+      learnMore: "Saiba mais"
+    }
+  },
+  footerLinks: {
+    privacy: "Privacidade",
+    terms: "Termos",
+    about: "Sobre",
+    contact: "Contato",
+  },
 };
