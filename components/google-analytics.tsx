@@ -1,26 +1,11 @@
-"use client";
-
 import Script from "next/script";
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-
 export function GoogleAnalytics() {
-  if (!GA_ID) return null;
-
   return (
-    <>
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-        strategy="afterInteractive"
-      />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${GA_ID}');
-        `}
-      </Script>
-    </>
+    <Script
+      src="https://umami-analytics-coral-eight.vercel.app/script.js"
+      data-website-id="8ce8ff26-3eea-4753-a73e-65b784b66df1"
+      strategy="afterInteractive"
+    />
   );
 }
